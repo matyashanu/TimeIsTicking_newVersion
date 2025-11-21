@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import TopNavbar from '@/components/TopNavbar';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import ThemeTransitionWrapper from '@/components/ThemeTransitionWrapper';
 
 export const metadata: Metadata = {
   title: 'TimeIsTicking',
@@ -17,12 +18,14 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider>
-          <div className="flex min-h-screen flex-col">
-            <TopNavbar />
-            <main className="container mx-auto flex-1 px-4 py-10">
-              {children}
-            </main>
-          </div>
+          <ThemeTransitionWrapper>
+            <div className="flex min-h-screen flex-col">
+              <TopNavbar />
+              <main className="container mx-auto flex-1 px-4 py-10">
+                {children}
+              </main>
+            </div>
+          </ThemeTransitionWrapper>
         </ThemeProvider>
       </body>
     </html>
