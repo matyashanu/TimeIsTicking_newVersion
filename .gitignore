@@ -1,0 +1,19 @@
+# Node and Next build outputs
+/timeticking/node_modules/
+/timeticking/frontend/node_modules/
+/timeticking/backend/node_modules/
+/timeticking/frontend/.next/
+/timeticking/frontend/.turbo/
+/timeticking/frontend/out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc
+.DS_Store
+/timeticking/backend/dist/
+/timeticking/frontend/dist/
+/timeticking/frontend/coverage/
