@@ -110,6 +110,12 @@ export function listEvents(_req: Request, res: Response) {
   return res.json({ events: eventStore });
 }
 
+export function getEventsForUser(userId?: string) {
+  if (!userId) return [];
+  // try matching calendarId or calendar owner
+  return eventStore.filter((e) => e.calendarId === userId || (e as any).owner === userId);
+}
+
 export async function parseCsvImport(req: Request, res: Response) {
   const { content } = req.body as { content?: string };
   if (!content) return res.status(400).json({ message: 'No CSV content provided' });
