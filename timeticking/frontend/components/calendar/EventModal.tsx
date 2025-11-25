@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CalendarEvent } from './types';
 import { useTheme } from '../ThemeProvider';
+import { EVENT_COLOR_OPTIONS, EVENT_COLOR_SWATCHES, EventColorKey } from './colors';
 
 interface Props {
   open: boolean;
@@ -28,10 +29,10 @@ export default function EventModal({
   onDelete,
 }: Props) {
   const { theme } = useTheme();
-  const ref = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLFormElement | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [color, setColor] = useState('');
+  const [color, setColor] = useState<EventColorKey>('default');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [repeat, setRepeat] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
@@ -52,7 +53,7 @@ export default function EventModal({
       };
       setTitle(base.title || '');
       setDescription(base.description || '');
-      setColor(base.color || '');
+      setColor(isColorKey(base.color) ? (base.color as EventColorKey) : 'default');
       setStart(base.start);
       setEnd(base.end);
       setRepeat((base.repeat as typeof repeat) || 'none');
@@ -67,11 +68,13 @@ export default function EventModal({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open, onClose]);
 
-  const text = theme === 'dark' ? 'text-beige' : 'text-navy';
-  const bg = theme === 'dark' ? 'bg-navy' : 'bg-beige';
-  const field = theme === 'dark' ? 'bg-white/5 text-beige' : 'bg-black/5 text-navy';
-  const button = theme === 'dark' ? 'bg-beige text-navy' : 'bg-navy text-beige';
-  const border = theme === 'dark' ? 'border-beige/30' : 'border-navy/30';
+  const button = 'bg-[color:var(--fg)] text-[color:var(--bg)] hover:opacity-90';
+  const field = 'bg-[color:var(--bg)]/30 text-[color:var(--fg)]';
+
+  function isColorKey(value?: string | null): value is EventColorKey {
+    if (!value) return false;
+    return EVENT_COLOR_OPTIONS.includes(value as EventColorKey);
+  }
 
   if (!open) return null;
 
@@ -82,7 +85,7 @@ export default function EventModal({
       id: event?.id || crypto.randomUUID(),
       title,
       description,
-      color: color || undefined,
+      color: color === 'default' ? undefined : color,
       start,
       end,
       repeat,
@@ -92,49 +95,49 @@ export default function EventModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <form
         ref={ref}
         onSubmit={onSubmit}
-        className={`w-full max-w-xl rounded-2xl border ${border} ${bg} p-6 shadow-xl space-y-4`}
+        className="w-full max-w-xl space-y-4 rounded-2xl border border-[color:var(--border)]/40 bg-[color:var(--card-bg)] p-6 text-[color:var(--fg)] shadow-[0_35px_80px_rgba(0,0,0,0.45)]"
       >
-        <div className={`text-lg font-bold ${text}`}>{mode === 'add' ? 'Add Event' : 'Edit Event'}</div>
+        <div className="text-lg font-bold">{mode === 'add' ? 'Add Event' : 'Edit Event'}</div>
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
-            <label className={`text-sm font-semibold ${text}`}>Title *</label>
+            <label className="text-sm font-semibold">Title *</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm ${field} border ${border} outline-none`}
+              className={`mt-1 w-full rounded-lg border border-[color:var(--border)]/40 px-3 py-2 text-sm ${field} outline-none`}
               required
             />
           </div>
           <div>
-            <label className={`text-sm font-semibold ${text}`}>Start *</label>
+            <label className="text-sm font-semibold">Start *</label>
             <input
               type="datetime-local"
               value={start.slice(0, 16)}
               onChange={(e) => setStart(new Date(e.target.value).toISOString())}
-              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm ${field} border ${border} outline-none`}
+              className={`mt-1 w-full rounded-lg border border-[color:var(--border)]/40 px-3 py-2 text-sm ${field} outline-none`}
               required
             />
           </div>
           <div>
-            <label className={`text-sm font-semibold ${text}`}>End *</label>
+            <label className="text-sm font-semibold">End *</label>
             <input
               type="datetime-local"
               value={end.slice(0, 16)}
               onChange={(e) => setEnd(new Date(e.target.value).toISOString())}
-              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm ${field} border ${border} outline-none`}
+              className={`mt-1 w-full rounded-lg border border-[color:var(--border)]/40 px-3 py-2 text-sm ${field} outline-none`}
               required
             />
           </div>
           <div>
-            <label className={`text-sm font-semibold ${text}`}>Repeat</label>
+            <label className="text-sm font-semibold">Repeat</label>
             <select
               value={repeat}
               onChange={(e) => setRepeat(e.target.value as typeof repeat)}
-              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm ${field} border ${border} outline-none`}
+              className={`mt-1 w-full rounded-lg border border-[color:var(--border)]/40 px-3 py-2 text-sm ${field} outline-none`}
             >
               {repeatOptions.map((r) => (
                 <option key={r} value={r}>
@@ -143,22 +146,34 @@ export default function EventModal({
               ))}
             </select>
           </div>
-          <div>
-            <label className={`text-sm font-semibold ${text}`}>Color</label>
-            <input
-              type="color"
-              value={color || '#ffffff'}
-              onChange={(e) => setColor(e.target.value)}
-              className="mt-1 h-10 w-full rounded-lg border border-black/10 bg-transparent"
-            />
+          <div className="col-span-2">
+            <label className="text-sm font-semibold">Color</label>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {EVENT_COLOR_OPTIONS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setColor(key)}
+                  className={`flex flex-col items-center justify-center rounded-xl border border-[color:var(--border)]/30 px-3 py-2 text-xs font-bold uppercase ${
+                    color === key ? 'ring-2 ring-[color:var(--fg)]' : ''
+                  }`}
+                  style={{
+                    backgroundColor: EVENT_COLOR_SWATCHES[key],
+                    color: key === 'default' ? 'var(--fg)' : '#2F4156',
+                  }}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="col-span-2">
-            <label className={`text-sm font-semibold ${text}`}>Description</label>
+            <label className="text-sm font-semibold">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm ${field} border ${border} outline-none`}
+              className={`mt-1 w-full rounded-lg border border-[color:var(--border)]/40 px-3 py-2 text-sm ${field} outline-none`}
             />
           </div>
         </div>
@@ -176,7 +191,7 @@ export default function EventModal({
             <button
               type="button"
               onClick={onClose}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold ${field} border ${border}`}
+              className={`rounded-lg border border-[color:var(--border)]/40 px-4 py-2 text-sm font-semibold ${field}`}
             >
               Cancel
             </button>

@@ -1,24 +1,14 @@
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import ical from 'node-ical';
-
-interface EventDTO {
-  id: string;
-  title: string;
-  description?: string;
-  start: string;
-  end: string;
-  color?: string;
-  source?: 'imported' | 'local';
-  location?: string;
-  repeat?: 'none' | 'daily' | 'weekly' | 'monthly';
-  uid?: string;
-  rrule?: string;
-  calendarId?: string;
-  allDay?: boolean;
-}
-
-const eventStore: EventDTO[] = [];
+import { EventDTO, SessionTypes } from '../types/calendar.js';
+import {
+  eventStore,
+  subjectStore,
+  createEmptySessionTypes,
+  linkEventToSubject,
+  unlinkEventFromSubject,
+} from '../store/calendarStore.js';
 
 function ensureIsoString(value: string | Date | undefined): string {
   if (!value) return new Date().toISOString();
@@ -42,7 +32,109 @@ function normalizeEvent(input: Partial<EventDTO>): EventDTO {
     rrule: input.rrule,
     calendarId: input.calendarId,
     allDay: input.allDay,
+    subjectCode: input.subjectCode || null,
   };
+}
+
+function extractSubjectCode(title: string): string | null {
+  if (!title) return null;
+  const trimmed = title.trimStart();
+  if (trimmed.length < 6) return null;
+  const code = trimmed.slice(0, 6);
+  const normalized = code.replace(/\s+/g, '');
+  if (!normalized.length) return null;
+  return code.toUpperCase();
+}
+
+const SESSION_LABELS = [
+  'LECTURE',
+  'EXERCISE SESSION',
+  'EXERCISE',
+  'WORKSHOP',
+  'LAB',
+  'PROJECT',
+  'SEMINAR',
+  'EXAM',
+];
+
+function extractCourseName(title: string): string {
+  const upper = title.toUpperCase();
+  for (const label of SESSION_LABELS) {
+    const markerIndex = upper.indexOf(label);
+    if (markerIndex === -1) continue;
+    const afterLabel = upper.slice(markerIndex + label.length);
+    const colonMatch = afterLabel.match(/^\s*:/);
+    if (!colonMatch) continue;
+    const startIndex = markerIndex + label.length + colonMatch[0].length;
+    const raw = title.slice(startIndex);
+    const endIndex = raw.search(/[-,–]/);
+    const name = (endIndex === -1 ? raw : raw.slice(0, endIndex)).trim();
+    if (name.length) return name;
+  }
+  const fallbackAfterCode = title.slice(Math.min(6, title.length)).trim();
+  if (fallbackAfterCode.length) {
+    const cleaned = fallbackAfterCode.split(/[-,–]/)[0]?.trim();
+    if (cleaned?.length) return cleaned;
+  }
+  const parts = title.split(' ');
+  parts.shift();
+  const fallback = parts.join(' ').trim();
+  return fallback.length ? fallback : '(Unnamed Course)';
+}
+
+const SESSION_CHAR_MAP: Record<string, keyof SessionTypes> = {
+  H: 'lecture',
+  W: 'lecture',
+  Z: 'exercise',
+  P: 'lab',
+  I: 'project',
+  O: 'other',
+  S: 'seminar',
+  E: 'exam',
+};
+
+const SESSION_KEYWORDS: Record<Exclude<keyof SessionTypes, 'other'>, string[]> = {
+  lecture: ['LECTURE', 'READING', 'HOORCOLLEGE'],
+  exercise: ['EXERCISE', 'EXERCISES SESSION', 'EXERCISE SESSION', 'WERKCOLLEGE'],
+  lab: ['LAB', 'WORKSHOP', 'PRACTICUM', 'PRACTICUMRUIMTE'],
+  project: ['PROJECT'],
+  seminar: ['SEMINAR'],
+  exam: ['EXAM', 'EXAMEN', 'EXAMINATION'],
+};
+
+function detectSessionTypes(
+  subjectCode: string | undefined,
+  title: string,
+  description?: string,
+): SessionTypes {
+  const detected = createEmptySessionTypes();
+  const tokenChar = subjectCode?.[2]?.toUpperCase();
+  const initialKey = tokenChar ? SESSION_CHAR_MAP[tokenChar] : undefined;
+  let matched = false;
+  if (initialKey && initialKey !== 'other') {
+    detected[initialKey] = true;
+    matched = true;
+  }
+  const text = `${title} ${description || ''}`.toUpperCase();
+  (Object.entries(SESSION_KEYWORDS) as [Exclude<keyof SessionTypes, 'other'>, string[]][]).forEach(
+    ([key, terms]) => {
+      if (terms.some((keyword) => text.includes(keyword))) {
+        detected[key] = true;
+        matched = true;
+      }
+    },
+  );
+  if (!matched) detected.other = true;
+  return detected;
+}
+
+function assignSubjectMetadata(event: EventDTO, title: string, description?: string) {
+  const subjectCode = extractSubjectCode(title);
+  if (!subjectCode) return;
+  event.subjectCode = subjectCode;
+  const sessionTypes = detectSessionTypes(subjectCode, title, description);
+  const nameHint = extractCourseName(title);
+  linkEventToSubject(event, { sessionTypes, nameHint });
 }
 
 function parseCsv(content: string): EventDTO[] {
@@ -55,7 +147,7 @@ function parseCsv(content: string): EventDTO[] {
     headers.forEach((h, idx) => {
       row[h] = cols[idx] || '';
     });
-    return {
+    const event: EventDTO = {
       id: uuid(),
       title: row.title || 'Untitled',
       description: row.description,
@@ -63,7 +155,9 @@ function parseCsv(content: string): EventDTO[] {
       end: new Date(`${row.date}T${row['end time'] || row.end || row['start time'] || '00:30'}`).toISOString(),
       color: row.color || undefined,
       source: 'imported',
-    } satisfies EventDTO;
+    };
+    assignSubjectMetadata(event, event.title, event.description);
+    return event;
   });
 }
 
@@ -73,9 +167,10 @@ function parseIcsText(text: string): EventDTO[] {
   Object.values(data).forEach((item) => {
     if (item.type === 'VEVENT') {
       const ruleText = item.rrule?.toString?.();
+      const summary = item.summary || 'Untitled';
       const base: EventDTO = {
         id: uuid(),
-        title: item.summary || 'Untitled',
+        title: summary,
         description: item.description,
         location: item.location,
         start: item.start?.toISOString?.() || new Date().toISOString(),
@@ -84,6 +179,7 @@ function parseIcsText(text: string): EventDTO[] {
         rrule: ruleText,
         uid: (item as any).uid,
       };
+      assignSubjectMetadata(base, summary, item.description);
 
       if (item.rrule) {
         const now = new Date();
@@ -91,12 +187,14 @@ function parseIcsText(text: string): EventDTO[] {
         const dates = item.rrule.between(now, limit, true);
         dates.forEach((dt) => {
           const dur = item.end && item.start ? item.end.getTime() - item.start.getTime() : 30 * 60 * 1000;
-          events.push({
+          const expanded: EventDTO = {
             ...base,
             id: uuid(),
             start: dt.toISOString(),
             end: new Date(dt.getTime() + dur).toISOString(),
-          });
+          };
+          assignSubjectMetadata(expanded, summary, item.description);
+          events.push(expanded);
         });
       } else {
         events.push(base);
@@ -106,16 +204,28 @@ function parseIcsText(text: string): EventDTO[] {
   return events;
 }
 
+function syncSubjectLinks(event: EventDTO, previousSubjectCode?: string | null) {
+  if (previousSubjectCode && previousSubjectCode !== event.subjectCode) {
+    unlinkEventFromSubject(event.id, previousSubjectCode);
+  }
+  if (event.subjectCode) {
+    linkEventToSubject(event, { nameHint: event.title });
+  }
+}
+
 export function listEvents(_req: Request, res: Response) {
-  return res.json({ events: eventStore });
+  return res.json({ events: eventStore, subjects: subjectStore });
 }
 
 export async function parseCsvImport(req: Request, res: Response) {
   const { content } = req.body as { content?: string };
   if (!content) return res.status(400).json({ message: 'No CSV content provided' });
   const events = parseCsv(content);
-  events.forEach((ev) => eventStore.push(ev));
-  return res.json({ events });
+  events.forEach((ev) => {
+    eventStore.push(ev);
+    syncSubjectLinks(ev);
+  });
+  return res.json({ events, subjects: subjectStore });
 }
 
 export async function parseIcsImport(req: Request, res: Response) {
@@ -128,8 +238,11 @@ export async function parseIcsImport(req: Request, res: Response) {
     }
     if (!icsText) return res.status(400).json({ message: 'No ICS content provided' });
     const events = parseIcsText(icsText);
-    events.forEach((ev) => eventStore.push(ev));
-    return res.json({ events });
+    events.forEach((ev) => {
+      eventStore.push(ev);
+      syncSubjectLinks(ev);
+    });
+    return res.json({ events, subjects: subjectStore });
   } catch (e) {
     return res.status(500).json({ message: 'Failed to parse ICS', error: (e as Error).message });
   }
@@ -140,6 +253,7 @@ export async function addEvent(req: Request, res: Response) {
   if (!event.title || !event.start || !event.end) return res.status(400).json({ message: 'Missing fields' });
   const saved = normalizeEvent(event);
   eventStore.push(saved);
+  syncSubjectLinks(saved);
   return res.json({ event: saved });
 }
 
@@ -154,12 +268,14 @@ export async function updateEvent(req: Request, res: Response) {
   const event = req.body as EventDTO;
   if (!id) return res.status(400).json({ message: 'Missing id' });
   const existingIndex = eventStore.findIndex((e) => e.id === id);
+  const previous = existingIndex >= 0 ? eventStore[existingIndex] : undefined;
   const updated = normalizeEvent({ ...event, id });
   if (existingIndex >= 0) {
     eventStore[existingIndex] = updated;
   } else {
     eventStore.push(updated);
   }
+  syncSubjectLinks(updated, previous?.subjectCode || null);
   return res.json({ event: updated });
 }
 
@@ -168,7 +284,10 @@ export async function deleteEvent(req: Request, res: Response) {
   if (!id) return res.status(400).json({ message: 'Missing id' });
   const index = eventStore.findIndex((e) => e.id === id);
   if (index >= 0) {
-    eventStore.splice(index, 1);
+    const [removed] = eventStore.splice(index, 1);
+    if (removed?.subjectCode) {
+      unlinkEventFromSubject(removed.id, removed.subjectCode);
+    }
   }
   return res.json({ id });
 }

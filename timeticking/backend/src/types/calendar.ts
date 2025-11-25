@@ -1,13 +1,11 @@
-export type CalendarView = 'day' | 'week' | 'month';
-
-export interface CalendarEvent {
+export interface EventDTO {
   id: string;
   title: string;
   description?: string;
-  start: string; // ISO string
-  end: string; // ISO string
+  start: string;
+  end: string;
   color?: string;
-  source?: 'local' | 'imported';
+  source?: 'imported' | 'local';
   location?: string;
   repeat?: 'none' | 'daily' | 'weekly' | 'monthly';
   uid?: string;
@@ -27,7 +25,7 @@ export interface SessionTypes {
   other: boolean;
 }
 
-export interface Subject {
+export interface SubjectDTO {
   id: string;
   courseCode: string;
   name: string;
