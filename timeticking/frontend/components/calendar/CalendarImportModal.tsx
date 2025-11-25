@@ -29,11 +29,7 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open, onClose]);
 
-  const text = theme === 'dark' ? 'text-beige' : 'text-navy';
-  const bg = theme === 'dark' ? 'bg-navy' : 'bg-beige';
-  const field = theme === 'dark' ? 'bg-white/5 text-beige' : 'bg-black/5 text-navy';
-  const button = theme === 'dark' ? 'bg-beige text-navy' : 'bg-navy text-beige';
-  const border = theme === 'dark' ? 'border-beige/30' : 'border-navy/30';
+  const button = 'bg-[color:var(--fg)] text-[color:var(--bg)] hover:opacity-90';
 
   const handleFile = async (file: File, type: 'csv' | 'ics') => {
     const textContent = await file.text();
@@ -44,7 +40,7 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
     setLoading(true);
     setError(null);
     try {
-      const events = await importCalendar(type, { content, url: type === 'ics' ? icsUrl : undefined });
+      const { events } = await importCalendar(type, { content, url: type === 'ics' ? icsUrl : undefined });
       setPreview(events);
     } catch (e) {
       setError((e as Error).message);
@@ -61,20 +57,20 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-4">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">
       <div
         ref={modalRef}
-        className={`w-full max-w-2xl rounded-2xl border ${border} ${bg} p-6 shadow-xl`}
+        className="w-full max-w-2xl rounded-2xl border border-[color:var(--border)]/40 bg-[color:var(--card-bg)] p-6 text-[color:var(--fg)] shadow-[0_35px_80px_rgba(0,0,0,0.45)]"
       >
-        <div className={`mb-4 text-lg font-bold ${text}`}>Import Calendar</div>
+        <div className="mb-4 text-lg font-bold">Import Calendar</div>
         <div className="flex flex-col gap-4">
-          <label className={`text-sm font-semibold ${text}`}>iCal URL</label>
+          <label className="text-sm font-semibold">iCal URL</label>
           <div className="flex gap-2">
             <input
               value={icsUrl}
               onChange={(e) => setIcsUrl(e.target.value)}
               placeholder="https://example.com/calendar.ics"
-              className={`flex-1 rounded-lg px-3 py-2 text-sm ${field} border ${border} outline-none`}
+              className="flex-1 rounded-lg border border-[color:var(--border)]/40 bg-[color:var(--bg)]/30 px-3 py-2 text-sm text-[color:var(--fg)] outline-none placeholder:opacity-60"
             />
             <button
               type="button"
@@ -107,12 +103,12 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
           </div>
 
           {error ? <div className="text-sm text-red-400">{error}</div> : null}
-          {loading ? <div className={`text-sm ${text}`}>Parsing...</div> : null}
+          {loading ? <div className="text-sm opacity-80">Parsing...</div> : null}
 
           {preview.length > 0 ? (
-            <div className="max-h-48 overflow-auto rounded-lg border border-white/10">
+            <div className="max-h-48 overflow-auto rounded-lg border border-[color:var(--border)]/20">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-black/10">
+                <thead className="sticky top-0 bg-[color:var(--bg)]/30">
                   <tr>
                     <th className="px-3 py-2">Title</th>
                     <th className="px-3 py-2">Start</th>
@@ -121,7 +117,7 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
                 </thead>
                 <tbody>
                   {preview.map((ev) => (
-                    <tr key={ev.id} className="border-t border-white/10">
+                    <tr key={ev.id} className="border-t border-[color:var(--border)]/15">
                       <td className="px-3 py-2">{ev.title}</td>
                       <td className="px-3 py-2">
                         {new Date(ev.start).toLocaleString([], {
@@ -149,7 +145,7 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
             <button
               type="button"
               onClick={onClose}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold ${field} border ${border}`}
+              className="rounded-lg border border-[color:var(--border)]/40 bg-transparent px-4 py-2 text-sm font-semibold text-[color:var(--fg)]"
             >
               Cancel
             </button>
