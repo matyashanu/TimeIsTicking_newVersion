@@ -29,8 +29,15 @@ export default function AnalogClock() {
 
     const drawHandsAndTicks = (
       date: Date,
-      handColor: string,
-      accentColor: string,
+      hourHandColor: string,
+      minuteHandColor: string,
+      secondsHandColor: string,
+      centerPivotColor: string,
+      ctx: CanvasRenderingContext2D,
+      centerPos: number,
+      rad: number,
+      dpr: number,
+      size: number,
     ) => {
       const milliseconds = date.getTime() === 0 ? 0 : date.getMilliseconds();
       const seconds =
@@ -48,55 +55,96 @@ export default function AnalogClock() {
         length: number,
         width: number,
         color: string,
+        glow: boolean = false,
       ) => {
-        context.save();
-        context.translate(center, center);
-        context.rotate(angle);
-        context.beginPath();
-        context.moveTo(0, 12);
-        context.lineTo(0, -length);
-        context.strokeStyle = color;
-        context.lineWidth = width;
-        context.lineCap = 'round';
-        context.shadowColor = `${color}55`;
-        context.shadowBlur = 10;
-        context.stroke();
-        context.restore();
+        ctx.save();
+        ctx.translate(centerPos, centerPos);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 12);
+        ctx.lineTo(0, -length);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        if (glow) {
+          ctx.shadowColor = `${color}88`;
+          ctx.shadowBlur = 12;
+        }
+        ctx.stroke();
+        ctx.restore();
       };
 
-      drawHand(hourAngle, radius * 0.5, 6, handColor);
-      drawHand(minuteAngle, radius * 0.72, 4, handColor);
-      drawHand(secondAngle, radius * 0.82, 2, accentColor);
+      // Hour hand: short, thick, soft blue
+      drawHand(hourAngle, rad * 0.5, 6, hourHandColor, false);
+      
+      // Minute hand: longer, slightly thinner, bright blue
+      drawHand(minuteAngle, rad * 0.72, 4, minuteHandColor, false);
+      
+      // Seconds hand: thin, bright, with neon-like glow
+      drawHand(secondAngle, rad * 0.82, 2, secondsHandColor, true);
 
-      // Center cap
-      context.save();
-      context.beginPath();
-      context.arc(center, center, 7, 0, Math.PI * 2);
-      context.fillStyle = handColor;
-      context.shadowColor = `${handColor}66`;
-      context.shadowBlur = 12;
-      context.fill();
-      context.restore();
+      // Center pivot dot - slightly brighter, like a blue LED
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerPos, centerPos, 7, 0, Math.PI * 2);
+      ctx.fillStyle = centerPivotColor;
+      ctx.shadowColor = `${centerPivotColor}99`;
+      ctx.shadowBlur = 15;
+      ctx.fill();
+      ctx.restore();
     };
 
     const draw = () => {
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-      const bgColor = theme === 'dark' ? '#2F4156' : '#fff0db';
-      const fgColor = theme === 'dark' ? '#fff0db' : '#2F4156';
-      const subtle = theme === 'dark' ? '#fff0db99' : '#2F415666';
+      // Updated color palette for futuristic blue theme
+      let bgColor: string;
+      let fgColor: string;
+      let tickColor: string;
+      let hourHandColor: string;
+      let minuteHandColor: string;
+      let secondsHandColor: string;
+      let centerPivotColor: string;
 
-      // Face
+      if (theme === 'dark') {
+        bgColor = '#02091A'; // Deep navy face
+        fgColor = '#BFD9FF'; // Soft blue
+        tickColor = '#4A7BA7'; // Muted blue-gray
+        hourHandColor = '#6BA3D4'; // Soft blue
+        minuteHandColor = '#4FC3F7'; // Bright blue
+        secondsHandColor = '#00E5FF'; // Cyan glow
+        centerPivotColor = '#4FC3F7'; // Blue LED-like
+      } else {
+        bgColor = '#F8FAFF'; // Very light blue-white
+        fgColor = '#2F4156'; // Dark navy
+        tickColor = '#B0C4DE'; // Light gray-blue
+        hourHandColor = '#2F4156'; // Dark navy
+        minuteHandColor = '#0066CC'; // Bright blue
+        secondsHandColor = '#0099FF'; // Brighter cyan
+        centerPivotColor = '#0066CC'; // Blue center
+      }
+
+      // Face with outer glow ring
       context.save();
       context.fillStyle = bgColor;
-      context.shadowColor = `${fgColor}33`;
-      context.shadowBlur = 18;
+      context.shadowColor = theme === 'dark' ? 'rgba(79, 195, 247, 0.3)' : 'rgba(0, 102, 204, 0.15)';
+      context.shadowBlur = 25;
       context.beginPath();
-      context.arc(center, center, radius + 8, 0, Math.PI * 2);
+      context.arc(center, center, radius + 12, 0, Math.PI * 2);
       context.fill();
       context.restore();
 
+      // Outer ring border
+      context.save();
+      context.strokeStyle = theme === 'dark' ? 'rgba(79, 195, 247, 0.2)' : 'rgba(0, 102, 204, 0.1)';
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc(center, center, radius + 10, 0, Math.PI * 2);
+      context.stroke();
+      context.restore();
+
+      // Main face
       context.save();
       context.fillStyle = bgColor;
       context.beginPath();
@@ -104,36 +152,36 @@ export default function AnalogClock() {
       context.fill();
       context.restore();
 
-      // Ticks (60 total, 12 major)
+      // Minimalist tick marks (only hour ticks - small circular dots)
       context.save();
       context.translate(center, center);
-      for (let i = 0; i < 60; i += 1) {
-        const angle = (i * Math.PI * 2) / 60;
-        const isHourTick = i % 5 === 0;
-        const tickStart = radius - (isHourTick ? 26 : 20);
-        const tickEnd = radius - (isHourTick ? 10 : 14);
-        const xStart = Math.cos(angle) * tickStart;
-        const yStart = Math.sin(angle) * tickStart;
-        const xEnd = Math.cos(angle) * tickEnd;
-        const yEnd = Math.sin(angle) * tickEnd;
+      for (let i = 0; i < 12; i += 1) {
+        const angle = (i * Math.PI * 2) / 12;
+        const tickRadius = radius - 20;
+        const x = Math.cos(angle) * tickRadius;
+        const y = Math.sin(angle) * tickRadius;
 
+        // Draw as small circles instead of dashes
         context.beginPath();
-        context.moveTo(xStart, yStart);
-        context.lineTo(xEnd, yEnd);
-        context.strokeStyle = isHourTick ? fgColor : subtle;
-        context.lineWidth = isHourTick ? 3 : 1.5;
-        context.lineCap = 'round';
-        context.stroke();
+        context.arc(x, y, 3, 0, Math.PI * 2);
+        context.fillStyle = tickColor;
+        context.fill();
       }
       context.restore();
 
-      drawHandsAndTicks(new Date(), fgColor, subtle);
+      drawHandsAndTicks(new Date(), hourHandColor, minuteHandColor, secondsHandColor, centerPivotColor, context, center, radius, dpr, CANVAS_SIZE);
 
       frameId = requestAnimationFrame(draw);
     };
 
     // Initial zeroed render to match SSR
-    drawHandsAndTicks(new Date(0), theme === 'dark' ? '#fff0db' : '#2F4156', theme === 'dark' ? '#fff0db99' : '#2F415666');
+    const darkTheme = theme === 'dark';
+    const initBgColor = darkTheme ? '#02091A' : '#F8FAFF';
+    const initHourColor = darkTheme ? '#6BA3D4' : '#2F4156';
+    const initMinColor = darkTheme ? '#4FC3F7' : '#0066CC';
+    const initSecColor = darkTheme ? '#00E5FF' : '#0099FF';
+    const initPivotColor = darkTheme ? '#4FC3F7' : '#0066CC';
+    drawHandsAndTicks(new Date(0), initHourColor, initMinColor, initSecColor, initPivotColor, context, center, radius, dpr, CANVAS_SIZE);
     draw();
 
     return () => {
@@ -143,17 +191,20 @@ export default function AnalogClock() {
     };
   }, [theme]);
 
-  const glow = theme === 'dark' ? 'bg-beige/10' : 'bg-navy/10';
-  const border = theme === 'dark' ? 'border-beige/20' : 'border-navy/20';
+  const darkTheme = theme === 'dark';
+  const glowColor = darkTheme 
+    ? 'shadow-[0_0_40px_rgba(79,195,247,0.4),0_0_80px_rgba(79,195,247,0.2)]' 
+    : 'shadow-[0_0_30px_rgba(0,102,204,0.2),0_0_60px_rgba(0,102,204,0.1)]';
+  const border = darkTheme ? 'border-blue-400/20' : 'border-blue-300/20';
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <div className={`absolute inset-8 rounded-full ${glow} blur-3xl`} />
+      <div className={`absolute inset-8 rounded-full ${darkTheme ? 'bg-blue-400/5' : 'bg-blue-300/5'} blur-3xl`} />
       <canvas
         ref={canvasRef}
         width={CANVAS_SIZE}
         height={CANVAS_SIZE}
-        className={`rounded-full ${border} border bg-transparent shadow-[0_0_30px_rgba(0,0,0,0.25)]`}
+        className={`rounded-full ${border} border ${glowColor}`}
       />
     </div>
   );

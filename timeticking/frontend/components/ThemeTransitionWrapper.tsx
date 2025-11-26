@@ -2,6 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ThemeContext, useTheme } from './ThemeProvider';
+import { AuthProvider, useAuth } from './AuthProvider';
+import Landing from './Landing';
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Landing />;
+  return <>{children}</>;
+}
 
 export default function ThemeTransitionWrapper({ children }: { children: React.ReactNode }) {
   const { theme, transition, toggleTheme, completeTransition, mounted } = useTheme();
@@ -28,7 +36,9 @@ export default function ThemeTransitionWrapper({ children }: { children: React.R
     return (
       <div data-theme={theme}>
         <ThemeContext.Provider value={{ theme, toggleTheme, transition, completeTransition, mounted }}>
-          {children}
+          <AuthProvider>
+            <AuthGate>{children}</AuthGate>
+          </AuthProvider>
         </ThemeContext.Provider>
       </div>
     );
@@ -40,7 +50,11 @@ export default function ThemeTransitionWrapper({ children }: { children: React.R
         <ThemeContext.Provider
           value={{ theme: transition.newTheme, toggleTheme, transition, completeTransition, mounted }}
         >
-          <div className="theme-layer-content">{children}</div>
+          <AuthProvider>
+            <div className="theme-layer-content">
+              <AuthGate>{children}</AuthGate>
+            </div>
+          </AuthProvider>
         </ThemeContext.Provider>
       </div>
       <div
@@ -54,9 +68,11 @@ export default function ThemeTransitionWrapper({ children }: { children: React.R
         <ThemeContext.Provider
           value={{ theme: transition.oldTheme, toggleTheme, transition, completeTransition, mounted }}
         >
-          <div className="theme-layer-content" aria-hidden>
-            {children}
-          </div>
+          <AuthProvider>
+            <div className="theme-layer-content" aria-hidden>
+              <AuthGate>{children}</AuthGate>
+            </div>
+          </AuthProvider>
         </ThemeContext.Provider>
       </div>
     </div>
