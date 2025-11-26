@@ -27,8 +27,12 @@ body {
 * {
   font-family: 'Trade Gothic Next Heavy', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   font-weight: 700 !important;
-  text-transform: uppercase !important;
   color: var(--fg);
+}
+
+/* Apply uppercase only to specific elements, not to inputs */
+button, label, h1, h2, h3, h4, h5, h6, nav, header, footer {
+  text-transform: uppercase !important;
 }
 
 select.themed-select {
