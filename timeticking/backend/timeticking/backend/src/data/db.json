@@ -1,0 +1,84 @@
+{
+  "users": [
+    {
+      "id": "user1",
+      "username": "alice",
+      "email": "alice@example.com"
+    },
+    {
+      "id": "user2",
+      "username": "bob",
+      "email": "bob@example.com"
+    },
+    {
+      "id": "user3",
+      "username": "carol",
+      "email": "carol@example.com"
+    }
+  ],
+  "friendRequests": [],
+  "friendships": [],
+  "messages": [],
+  "focusSessions": [
+    {
+      "id": "4560bc12-3c63-4c74-ab7f-2af6339fdde0",
+      "userId": "user1",
+      "start": "2025-11-23T21:12:50.888Z",
+      "end": "2025-11-23T21:51:20.362Z"
+    },
+    {
+      "id": "5614e36f-01f7-49b1-a247-44b9eeb5b502",
+      "userId": "user1",
+      "start": "2025-11-23T21:14:50.097Z",
+      "end": "2025-11-23T21:46:06.855Z"
+    },
+    {
+      "id": "c0cab964-9199-4f7b-b392-7c9a565d9f9b",
+      "userId": "user1",
+      "start": "2025-11-23T21:18:24.003Z",
+      "end": "2025-11-23T21:18:35.878Z"
+    },
+    {
+      "id": "e77b61fc-56b7-4be8-916b-af86d0d51523",
+      "userId": "user1",
+      "start": "2025-11-23T21:22:40.666Z",
+      "end": "2025-11-23T21:22:48.857Z"
+    },
+    {
+      "id": "0ad49302-f366-4752-adec-1098e076a634",
+      "userId": "user1",
+      "start": "2025-11-23T21:28:30.736Z",
+      "end": "2025-11-23T21:28:34.388Z"
+    },
+    {
+      "id": "63ee87cb-16c1-49f5-b5cc-d02c13bcd92f",
+      "userId": "user1",
+      "start": "2025-11-23T21:33:03.448Z",
+      "end": "2025-11-23T21:33:05.536Z"
+    },
+    {
+      "id": "ad9bfb26-70c2-402f-b0b0-448e4900ab83",
+      "userId": "user1",
+      "start": "2025-11-23T21:33:19.551Z",
+      "end": "2025-11-23T21:33:20.264Z"
+    },
+    {
+      "id": "e32db4c6-bdf8-4b73-b7f0-411585e20e79",
+      "userId": "user1",
+      "start": "2025-11-23T21:33:54.878Z",
+      "end": "2025-11-23T21:33:56.618Z"
+    },
+    {
+      "id": "cb77eaed-8e1d-490c-883b-361abd45f653",
+      "userId": "user1",
+      "start": "2025-11-23T21:54:42.066Z",
+      "end": "2025-11-23T21:55:18.236Z"
+    },
+    {
+      "id": "ec6600fb-8073-4842-ba21-f03d3cc86577",
+      "userId": "user1",
+      "start": "2025-11-23T21:57:28.242Z",
+      "end": "2025-11-23T21:57:34.975Z"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MoonStar, SunMedium } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import FocusToggle from '@/components/FocusToggle';
 
 const links = [
   { href: '/', label: 'Home' },
@@ -42,6 +43,9 @@ export default function TopNavbar() {
           })}
         </div>
         <div className="flex items-center gap-3">
+          <div className="relative">
+            <FocusToggle />
+          </div>
           <button
             type="button"
             aria-label="Toggle theme"
