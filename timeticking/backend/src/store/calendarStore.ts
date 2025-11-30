@@ -8,6 +8,21 @@ const SEMESTER_MONTHS = {
   S2: new Set([1, 2, 3, 4, 5]), // February through June
 };
 
+export function normalizeCourseCode(raw: string): string {
+  const trimmed = (raw || '').trim().toUpperCase();
+  if (!trimmed) return '';
+  return trimmed.slice(0, 5);
+}
+
+function inferSemesterFromCourseCode(code: string): SubjectDTO['semester'] {
+  const trimmed = normalizeCourseCode(code);
+  if (!trimmed) return '';
+  const lastChar = trimmed.charAt(trimmed.length - 1);
+  if (lastChar === '1') return 'S1';
+  if (lastChar === '2') return 'S2';
+  return '';
+}
+
 export function createEmptySessionTypes(): SessionTypes {
   return {
     lecture: false,
@@ -37,26 +52,33 @@ export function determineSemester(subject: SubjectDTO): SubjectDTO['semester'] {
 }
 
 export function updateSubjectSemester(subject: SubjectDTO) {
-  const detected = determineSemester(subject);
-  if (detected) {
-    subject.semester = detected;
-  } else if (!subject.semester) {
-    subject.semester = '';
+  if (subject.semester) return;
+  const fromCode = inferSemesterFromCourseCode(subject.courseCode);
+  if (fromCode) {
+    subject.semester = fromCode;
+    return;
   }
+  const detected = determineSemester(subject);
+  subject.semester = detected || '';
 }
 
 export function getSubjectByCode(code: string): SubjectDTO | undefined {
-  return subjectStore.find((subject) => subject.courseCode === code);
+  const normalized = normalizeCourseCode(code);
+  if (!normalized) return undefined;
+  return subjectStore.find((subject) => subject.courseCode === normalized);
 }
 
 export function ensureSubject(code: string, name?: string): SubjectDTO {
-  let subject = getSubjectByCode(code);
+  const normalizedCode = normalizeCourseCode(code);
+  if (!normalizedCode) throw new Error('Invalid course code');
+  let subject = getSubjectByCode(normalizedCode);
   if (!subject) {
+    const inferredSemester = inferSemesterFromCourseCode(normalizedCode);
     subject = {
-      id: code,
-      courseCode: code,
+      id: normalizedCode,
+      courseCode: normalizedCode,
       name: name && name.length ? name : '(Unnamed Course)',
-      semester: '',
+      semester: inferredSemester,
       credits: undefined,
       confidence: 3,
       sessionTypes: createEmptySessionTypes(),

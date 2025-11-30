@@ -7,7 +7,7 @@ export interface EventDTO {
   color?: string;
   source?: 'imported' | 'local';
   location?: string;
-  repeat?: 'none' | 'daily' | 'weekly' | 'monthly';
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   uid?: string;
   rrule?: string;
   calendarId?: string;

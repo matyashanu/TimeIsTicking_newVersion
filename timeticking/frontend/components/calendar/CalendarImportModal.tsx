@@ -54,6 +54,20 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
     onClose();
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSingleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.toLowerCase().endsWith('.csv') ? 'csv' : 'ics';
+    handleFile(file, ext as 'csv' | 'ics');
+    e.target.value = '';
+  };
+
   if (!open) return null;
 
   return (
@@ -64,6 +78,9 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
       >
         <div className="mb-4 text-lg font-bold">Import Calendar</div>
         <div className="flex flex-col gap-4">
+          <p className="text-sm opacity-80">
+            Upload your iCal (.ics) file or paste an iCal URL.
+          </p>
           <label className="text-sm font-semibold">iCal URL</label>
           <div className="flex gap-2">
             <input
@@ -83,23 +100,20 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
           </div>
           <div className="flex items-center gap-3">
             <input
+              ref={fileInputRef}
               type="file"
-              accept=".ics"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file, 'ics');
-              }}
-              className="text-sm"
+              accept=".ics,.csv"
+              onChange={handleSingleFileChange}
+              className="hidden"
             />
-            <input
-              type="file"
-              accept=".csv"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file, 'csv');
-              }}
-              className="text-sm"
-            />
+            <button
+              type="button"
+              onClick={handleFileButtonClick}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${button}`}
+              disabled={loading}
+            >
+              Upload iCal (.ics)
+            </button>
           </div>
 
           {error ? <div className="text-sm text-red-400">{error}</div> : null}
