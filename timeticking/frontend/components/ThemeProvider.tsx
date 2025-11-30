@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export type Theme = 'dark' | 'light';
 
@@ -21,11 +21,44 @@ export type ThemeContextValue = {
 
 export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+const themeCssMap: Record<
+  Theme,
+  {
+    surface: string;
+    text: string;
+    border: string;
+  }
+> = {
+  dark: {
+    surface: '#243341',
+    text: '#F5EFEB',
+    border: '#F5EFEB',
+  },
+  light: {
+    surface: '#E6DED8',
+    text: '#2F4156',
+    border: '#2F4156',
+  },
+};
+
+export const getThemeCssVariables = (theme: Theme) => {
+  const vars = themeCssMap[theme];
+  return {
+    '--theme-surface': vars.surface,
+    '--theme-text': vars.text,
+    '--theme-border': vars.border,
+  } as CSSProperties;
+};
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.setAttribute('data-theme', theme);
   root.classList.toggle('dark', theme === 'dark');
   root.style.colorScheme = theme;
+  const vars = getThemeCssVariables(theme);
+  Object.entries(vars).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

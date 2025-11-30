@@ -34,7 +34,7 @@ export default function FlipClockWidget() {
 
   return (
     <div className="flipclock-shell w-full flex items-center justify-center py-6">
-      <div ref={containerRef} className="flipclock-instance" />
+      <div ref={containerRef} className="flipclock-instance flip-clock-wrapper" />
     </div>
   );
 }

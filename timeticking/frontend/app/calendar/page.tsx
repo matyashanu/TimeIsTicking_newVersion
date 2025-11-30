@@ -1,11 +1,14 @@
 'use client';
 
-import CalendarContainer from '@/components/calendar/CalendarContainer';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function CalendarPage() {
-  return (
-    <div className="container mx-auto flex min-h-screen flex-col gap-6 px-4 py-10">
-      <CalendarContainer />
-    </div>
-  );
+export default function LegacyCalendarRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/planner/calendar');
+  }, [router]);
+
+  return null;
 }
