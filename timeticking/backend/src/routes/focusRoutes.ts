@@ -1,6 +1,6 @@
 import express from 'express';
-import requireUser from '../middleware/auth';
-import { startFocus, stopFocus, getLeaderboard } from '../controllers/focusController';
+import requireUser from '../middleware/auth.js';
+import { startFocus, stopFocus, getLeaderboard } from '../controllers/focusController.js';
 
 const router = express.Router();
 

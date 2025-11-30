@@ -78,6 +78,8 @@ body {
 /* Apply uppercase only to specific elements, not to inputs */
 button, label, h1, h2, h3, h4, h5, h6, nav, header, footer {
   text-transform: uppercase !important;
+}
+
 .theme-surface {
   background-color: var(--bg);
   color: var(--fg);

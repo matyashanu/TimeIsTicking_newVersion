@@ -17,8 +17,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
-    <html lang="en">
       <body className="app-surface">
         <ThemeProvider>
           <ScrollRestorationEffect />

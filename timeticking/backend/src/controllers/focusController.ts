@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { readDb, writeDb } from '../models/storage';
+import { readDb, writeDb } from '../models/storage.js';
 import { v4 as uuid } from 'uuid';
 
 function getWeekStart(d = new Date()) {
