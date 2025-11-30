@@ -77,6 +77,7 @@ export default function FlipClockWidget() {
             <div className="year-progress">{yearPct} of the year completed</div>
         </div>
       </div>
+      <div ref={containerRef} className="flipclock-instance flip-clock-wrapper" />
     </div>
   );
 }
