@@ -8,7 +8,6 @@ import FocusToggle from '@/components/FocusToggle';
 
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/calendar', label: 'Calendar' },
   { href: '/planner', label: 'Planner' },
   { href: '/social', label: 'Social' },
   { href: '/settings', label: 'Settings' },
@@ -23,16 +22,10 @@ export default function TopNavbar() {
       ? pathname === '/'
       : pathname?.startsWith(href);
 
-  const baseBg = theme === 'dark' ? 'bg-navy' : 'bg-beige';
-  const baseText = theme === 'dark' ? 'text-beige' : 'text-navy';
-  const accentHover = theme === 'dark' ? 'hover:bg-beige/10' : 'hover:bg-navy/10';
-  const borderColor = theme === 'dark' ? 'border-beige/25' : 'border-navy/25';
-  const activeBg = theme === 'dark' ? 'bg-beige text-navy' : 'bg-navy text-beige';
-
   return (
-    <header className={`sticky top-0 z-20 border-b ${borderColor} ${baseBg} backdrop-blur`}>
-      <nav className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-4">
-        <div className={`text-lg font-semibold tracking-[0.2em] ${baseText}`}>
+    <header className="sticky top-0 z-20 border-b border-[color:var(--border)]/30 bg-[color:var(--bg)] backdrop-blur">
+      <nav className="container mx-auto flex flex-wrap items-center gap-4 px-4 py-4 text-[color:var(--fg)]">
+        <div className="text-lg font-semibold tracking-[0.2em]">
           Time Is Ticking
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-center gap-3 text-base">
@@ -42,11 +35,7 @@ export default function TopNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-4 py-2 transition ${
-                  active
-                    ? `${activeBg}`
-                    : `${baseText} ${accentHover}`
-                }`}
+                className={`nav-tab ${active ? 'nav-tab--active' : ''}`}
               >
                 {link.label}
               </Link>
@@ -61,8 +50,10 @@ export default function TopNavbar() {
             type="button"
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className={`flex h-10 w-10 items-center justify-center rounded-full border ${borderColor} ${baseText} transition hover:-translate-y-0.5 hover:shadow-lg ${
-              theme === 'dark' ? 'hover:bg-beige/10' : 'hover:bg-navy/10'
+            className={`flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border)]/40 text-[color:var(--fg)] transition hover:-translate-y-0.5 hover:shadow-lg ${
+              theme === 'dark'
+                ? 'hover:bg-[rgba(245,239,235,0.12)]'
+                : 'hover:bg-[rgba(47,65,86,0.12)]'
             }`}
           >
             {theme === 'dark' ? <SunMedium size={18} /> : <MoonStar size={18} />}

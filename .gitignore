@@ -17,3 +17,7 @@ pnpm-debug.log*
 /timeticking/backend/dist/
 /timeticking/frontend/dist/
 /timeticking/frontend/coverage/
+backend-dev.log
+frontend-dev.log
+package-lock.json
+*.log

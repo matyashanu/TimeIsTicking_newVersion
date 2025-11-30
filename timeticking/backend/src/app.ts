@@ -6,6 +6,7 @@ import goalRoutes from './routes/goalRoutes.js';
 import calendarRoutes from './routes/calendarRoutes.js';
 import socialsRoutes from './routes/socialRoutes.js';
 import focusRoutes from './routes/focusRoutes.js';
+import subjectRoutes from './routes/subjectRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import path from 'path';
 
@@ -23,6 +24,7 @@ app.use('/api/focus', focusRoutes);
 
 // serve uploaded files
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/api/subjects', subjectRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
