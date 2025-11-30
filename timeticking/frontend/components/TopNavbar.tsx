@@ -9,6 +9,7 @@ import FocusToggle from '@/components/FocusToggle';
 const links = [
   { href: '/', label: 'Home' },
   { href: '/planner', label: 'Planner' },
+  { href: '/ai-feature', label: 'AI' },
   { href: '/social', label: 'Social' },
   { href: '/settings', label: 'Settings' },
 ];

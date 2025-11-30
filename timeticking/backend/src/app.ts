@@ -4,6 +4,7 @@ import userRoutes from './routes/userRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import goalRoutes from './routes/goalRoutes.js';
 import calendarRoutes from './routes/calendarRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 import socialsRoutes from './routes/socialRoutes.js';
 import focusRoutes from './routes/focusRoutes.js';
 import subjectRoutes from './routes/subjectRoutes.js';
@@ -19,6 +20,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/socials', socialsRoutes);
 app.use('/api/focus', focusRoutes);
 
