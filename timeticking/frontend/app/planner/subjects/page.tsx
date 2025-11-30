@@ -51,6 +51,7 @@ export default function PlannerSubjectsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'alphabetical' | 'credits' | 'confidence'>('alphabetical');
+  const [semesterFilter, setSemesterFilter] = useState<'all' | 'S1' | 'S2'>('all');
 
   useEffect(() => {
     let mounted = true;
@@ -173,7 +174,10 @@ export default function PlannerSubjectsPage() {
   };
 
   const sortedSubjects = useMemo(() => {
-    const items = [...subjects];
+    const items = subjects.filter((subject) => {
+      if (semesterFilter === 'all') return true;
+      return subject.semester === semesterFilter;
+    });
     if (sortMode === 'alphabetical') {
       items.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortMode === 'credits') {
@@ -187,7 +191,7 @@ export default function PlannerSubjectsPage() {
       items.sort((a, b) => b.confidence - a.confidence || a.name.localeCompare(b.name));
     }
     return items;
-  }, [subjects, sortMode]);
+  }, [subjects, sortMode, semesterFilter]);
 
   return (
     <section className="space-y-6 rounded-3xl border border-[color:var(--border)]/30 bg-[color:var(--card-bg)]/80 p-8 text-[color:var(--fg)] shadow-[0_25px_60px_rgba(0,0,0,0.25)]">
@@ -207,6 +211,15 @@ export default function PlannerSubjectsPage() {
             <option value="alphabetical">Alphabetical (A→Z)</option>
             <option value="credits">ECTS (ascending)</option>
             <option value="confidence">Confidence (high → low)</option>
+          </select>
+          <select
+            value={semesterFilter}
+            onChange={(e) => setSemesterFilter(e.target.value as typeof semesterFilter)}
+            className="rounded-full border border-[color:var(--border)]/40 bg-[color:var(--card-bg)] px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] outline-none"
+          >
+            <option value="all">All Semesters</option>
+            <option value="S1">Semester 1</option>
+            <option value="S2">Semester 2</option>
           </select>
           <button
             type="button"
@@ -299,7 +312,7 @@ export default function PlannerSubjectsPage() {
                   <input
                     value={subject.name}
                     onChange={(e) => handleFieldChange(subject.id, { name: e.target.value })}
-                    className="mt-2 w-full min-w-[320px] rounded-lg border border-[color:var(--border)]/30 bg-transparent px-3 py-2 text-sm outline-none md:min-w-[520px]"
+                    className="mt-2 w-full max-w-full rounded-lg border border-[color:var(--border)]/30 bg-transparent px-3 py-2 text-sm outline-none"
                   />
                 </div>
                 <div className="flex flex-col gap-2">

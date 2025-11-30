@@ -8,6 +8,7 @@ import {
   createEmptySessionTypes,
   linkEventToSubject,
   unlinkEventFromSubject,
+  normalizeCourseCode,
 } from '../store/calendarStore.js';
 
 function ensureIsoString(value: string | Date | undefined): string {
@@ -36,104 +37,59 @@ function normalizeEvent(input: Partial<EventDTO>): EventDTO {
   };
 }
 
-function extractSubjectCode(title: string): string | null {
-  if (!title) return null;
-  const trimmed = title.trimStart();
-  if (trimmed.length < 6) return null;
-  const code = trimmed.slice(0, 6);
-  const normalized = code.replace(/\s+/g, '');
-  if (!normalized.length) return null;
-  return code.toUpperCase();
+interface ParsedSubjectInfo {
+  courseCode: string | null;
+  sessionChar: string | null;
+  name: string | null;
 }
 
-const SESSION_LABELS = [
-  'LECTURE',
-  'EXERCISE SESSION',
-  'EXERCISE',
-  'WORKSHOP',
-  'LAB',
-  'PROJECT',
-  'SEMINAR',
-  'EXAM',
-];
+function parseSubjectInfoFromSummary(summary?: string): ParsedSubjectInfo {
+  if (!summary) {
+    return { courseCode: null, sessionChar: null, name: null };
+  }
+  const trimmed = summary.trimStart();
+  if (trimmed.length < 6) {
+    return { courseCode: null, sessionChar: null, name: null };
+  }
 
-function extractCourseName(title: string): string {
-  const upper = title.toUpperCase();
-  for (const label of SESSION_LABELS) {
-    const markerIndex = upper.indexOf(label);
-    if (markerIndex === -1) continue;
-    const afterLabel = upper.slice(markerIndex + label.length);
-    const colonMatch = afterLabel.match(/^\s*:/);
-    if (!colonMatch) continue;
-    const startIndex = markerIndex + label.length + colonMatch[0].length;
-    const raw = title.slice(startIndex);
-    const endIndex = raw.search(/[-,–]/);
-    const name = (endIndex === -1 ? raw : raw.slice(0, endIndex)).trim();
-    if (name.length) return name;
+  const prefix = trimmed.slice(0, 6);
+  const sessionChar = prefix[2] || null;
+  const rawCourseCode = prefix.slice(0, 2) + prefix.slice(3, 6); // drop 3rd char
+  const normalizedCourseCode = normalizeCourseCode(rawCourseCode);
+  const rest = trimmed.slice(6).trimStart();
+
+  let name: string | null = null;
+  if (rest.length) {
+    const colonIndex = rest.indexOf(':');
+    const base = colonIndex === -1 ? rest : rest.slice(0, colonIndex);
+    name = base.trim() || null;
   }
-  const fallbackAfterCode = title.slice(Math.min(6, title.length)).trim();
-  if (fallbackAfterCode.length) {
-    const cleaned = fallbackAfterCode.split(/[-,–]/)[0]?.trim();
-    if (cleaned?.length) return cleaned;
-  }
-  const parts = title.split(' ');
-  parts.shift();
-  const fallback = parts.join(' ').trim();
-  return fallback.length ? fallback : '(Unnamed Course)';
+
+  return {
+    courseCode: normalizedCourseCode || null,
+    sessionChar,
+    name,
+  };
 }
 
-const SESSION_CHAR_MAP: Record<string, keyof SessionTypes> = {
-  H: 'lecture',
-  W: 'lecture',
-  Z: 'exercise',
-  P: 'lab',
-  I: 'project',
-  O: 'other',
-  S: 'seminar',
-  E: 'exam',
-};
-
-const SESSION_KEYWORDS: Record<Exclude<keyof SessionTypes, 'other'>, string[]> = {
-  lecture: ['LECTURE', 'READING', 'HOORCOLLEGE'],
-  exercise: ['EXERCISE', 'EXERCISES SESSION', 'EXERCISE SESSION', 'WERKCOLLEGE'],
-  lab: ['LAB', 'WORKSHOP', 'PRACTICUM', 'PRACTICUMRUIMTE'],
-  project: ['PROJECT'],
-  seminar: ['SEMINAR'],
-  exam: ['EXAM', 'EXAMEN', 'EXAMINATION'],
-};
-
-function detectSessionTypes(
-  subjectCode: string | undefined,
-  title: string,
-  description?: string,
-): SessionTypes {
+function detectSessionTypesFromChar(sessionChar: string | null): SessionTypes {
   const detected = createEmptySessionTypes();
-  const tokenChar = subjectCode?.[2]?.toUpperCase();
-  const initialKey = tokenChar ? SESSION_CHAR_MAP[tokenChar] : undefined;
-  let matched = false;
-  if (initialKey && initialKey !== 'other') {
-    detected[initialKey] = true;
-    matched = true;
-  }
-  const text = `${title} ${description || ''}`.toUpperCase();
-  (Object.entries(SESSION_KEYWORDS) as [Exclude<keyof SessionTypes, 'other'>, string[]][]).forEach(
-    ([key, terms]) => {
-      if (terms.some((keyword) => text.includes(keyword))) {
-        detected[key] = true;
-        matched = true;
-      }
-    },
-  );
-  if (!matched) detected.other = true;
+  const code = sessionChar ? sessionChar.toUpperCase() : '';
+  if (code === 'H') detected.lecture = true;
+  else if (code === 'W') detected.exercise = true;
+  else if (code === 'P') detected.lab = true;
+  else if (code === 'I') detected.project = true;
+  else if (code) detected.other = true;
+  else detected.other = true;
   return detected;
 }
 
-function assignSubjectMetadata(event: EventDTO, title: string, description?: string) {
-  const subjectCode = extractSubjectCode(title);
-  if (!subjectCode) return;
-  event.subjectCode = subjectCode;
-  const sessionTypes = detectSessionTypes(subjectCode, title, description);
-  const nameHint = extractCourseName(title);
+function assignSubjectMetadata(event: EventDTO, summary: string, _description?: string, _uid?: string) {
+  const { courseCode, sessionChar, name } = parseSubjectInfoFromSummary(summary);
+  if (!courseCode) return;
+  event.subjectCode = courseCode;
+  const sessionTypes = detectSessionTypesFromChar(sessionChar);
+  const nameHint = name || '(Unnamed Course)';
   linkEventToSubject(event, { sessionTypes, nameHint });
 }
 
@@ -166,6 +122,7 @@ function parseIcsText(text: string): EventDTO[] {
   const data = ical.sync.parseICS(text);
   Object.values(data).forEach((item) => {
     if (item.type === 'VEVENT') {
+      const uid = (item as any).uid as string | undefined;
       const ruleText = item.rrule?.toString?.();
       const summary = item.summary || 'Untitled';
       const base: EventDTO = {
@@ -177,14 +134,15 @@ function parseIcsText(text: string): EventDTO[] {
         end: item.end?.toISOString?.() || new Date().toISOString(),
         source: 'imported',
         rrule: ruleText,
-        uid: (item as any).uid,
+        uid,
       };
-      assignSubjectMetadata(base, summary, item.description);
+      assignSubjectMetadata(base, summary, item.description, uid);
 
       if (item.rrule) {
-        const now = new Date();
-        const limit = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 90);
-        const dates = item.rrule.between(now, limit, true);
+        const seriesUid = uid || uuid();
+        const dtStart = item.start instanceof Date ? item.start : new Date();
+        const limit = new Date(dtStart.getFullYear(), dtStart.getMonth(), dtStart.getDate() + 90);
+        const dates = item.rrule.between(dtStart, limit, true);
         dates.forEach((dt) => {
           const dur = item.end && item.start ? item.end.getTime() - item.start.getTime() : 30 * 60 * 1000;
           const expanded: EventDTO = {
@@ -192,8 +150,9 @@ function parseIcsText(text: string): EventDTO[] {
             id: uuid(),
             start: dt.toISOString(),
             end: new Date(dt.getTime() + dur).toISOString(),
+            uid: seriesUid,
           };
-          assignSubjectMetadata(expanded, summary, item.description);
+          assignSubjectMetadata(expanded, summary, item.description, uid);
           events.push(expanded);
         });
       } else {
@@ -244,11 +203,18 @@ export async function parseIcsImport(req: Request, res: Response) {
     }
     if (!icsText) return res.status(400).json({ message: 'No ICS content provided' });
     const events = parseIcsText(icsText);
+    const added: EventDTO[] = [];
     events.forEach((ev) => {
-      eventStore.push(ev);
-      syncSubjectLinks(ev);
+      const exists = eventStore.some(
+        (existing) => existing.uid && ev.uid && existing.uid === ev.uid && existing.start === ev.start,
+      );
+      if (!exists) {
+        eventStore.push(ev);
+        syncSubjectLinks(ev);
+        added.push(ev);
+      }
     });
-    return res.json({ events, subjects: subjectStore });
+    return res.json({ events: added, subjects: subjectStore });
   } catch (e) {
     return res.status(500).json({ message: 'Failed to parse ICS', error: (e as Error).message });
   }
