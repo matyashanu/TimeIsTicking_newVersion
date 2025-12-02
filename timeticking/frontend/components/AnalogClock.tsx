@@ -3,13 +3,14 @@
 import { useEffect, useRef } from 'react';
 import { useTheme } from './ThemeProvider';
 
-const CANVAS_SIZE = 320;
+const DEFAULT_CANVAS_SIZE = 320;
 
-export default function AnalogClock() {
+export default function AnalogClock({ size = DEFAULT_CANVAS_SIZE }: { size?: number } = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { theme } = useTheme();
 
   useEffect(() => {
+    const CANVAS_SIZE = size;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -98,9 +99,8 @@ export default function AnalogClock() {
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-      // Updated color palette for futuristic blue theme
+      // Updated palette inspired by reference mockup
       let bgColor: string;
-      let fgColor: string;
       let tickColor: string;
       let hourHandColor: string;
       let minuteHandColor: string;
@@ -108,28 +108,34 @@ export default function AnalogClock() {
       let centerPivotColor: string;
 
       if (theme === 'dark') {
-        bgColor = '#02091A'; // Deep navy face
-        fgColor = '#BFD9FF'; // Soft blue
-        tickColor = '#4A7BA7'; // Muted blue-gray
-        hourHandColor = '#6BA3D4'; // Soft blue
-        minuteHandColor = '#4FC3F7'; // Bright blue
-        secondsHandColor = '#00E5FF'; // Cyan glow
-        centerPivotColor = '#4FC3F7'; // Blue LED-like
+        bgColor = '#23344f';
+        tickColor = '#f9f4e2';
+        hourHandColor = '#f9f4e2';
+        minuteHandColor = '#fdf9eb';
+        secondsHandColor = '#fff7d6';
+        centerPivotColor = '#fff7d6';
       } else {
-        bgColor = '#F8FAFF'; // Very light blue-white
-        fgColor = '#2F4156'; // Dark navy
-        tickColor = '#B0C4DE'; // Light gray-blue
-        hourHandColor = '#2F4156'; // Dark navy
-        minuteHandColor = '#0066CC'; // Bright blue
-        secondsHandColor = '#0099FF'; // Brighter cyan
-        centerPivotColor = '#0066CC'; // Blue center
+        bgColor = '#fefefe';
+        tickColor = '#2f3d53';
+        hourHandColor = '#2f3d53';
+        minuteHandColor = '#2f3d53';
+        secondsHandColor = '#2f3d53';
+        centerPivotColor = '#2f3d53';
       }
 
-      // Face with outer glow ring
+      // Main face
       context.save();
-      context.fillStyle = bgColor;
-      context.shadowColor = theme === 'dark' ? 'rgba(79, 195, 247, 0.3)' : 'rgba(0, 102, 204, 0.15)';
-      context.shadowBlur = 25;
+      const faceGradient = context.createRadialGradient(center, center, radius * 0.2, center, center, radius);
+      if (theme === 'dark') {
+        faceGradient.addColorStop(0, '#304766');
+        faceGradient.addColorStop(1, bgColor);
+      } else {
+        faceGradient.addColorStop(0, '#ffffff');
+        faceGradient.addColorStop(1, '#dfe6f0');
+      }
+      context.fillStyle = faceGradient;
+      context.shadowColor = theme === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(15, 23, 42, 0.15)';
+      context.shadowBlur = 30;
       context.beginPath();
       context.arc(center, center, radius + 12, 0, Math.PI * 2);
       context.fill();
@@ -137,14 +143,14 @@ export default function AnalogClock() {
 
       // Outer ring border
       context.save();
-      context.strokeStyle = theme === 'dark' ? 'rgba(79, 195, 247, 0.2)' : 'rgba(0, 102, 204, 0.1)';
+      context.strokeStyle = theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.12)';
       context.lineWidth = 2;
       context.beginPath();
-      context.arc(center, center, radius + 10, 0, Math.PI * 2);
+      context.arc(center, center, radius + 8, 0, Math.PI * 2);
       context.stroke();
       context.restore();
 
-      // Main face
+      // Main face fill
       context.save();
       context.fillStyle = bgColor;
       context.beginPath();
@@ -152,20 +158,22 @@ export default function AnalogClock() {
       context.fill();
       context.restore();
 
-      // Minimalist tick marks (only hour ticks - small circular dots)
+      // Tick marks similar to reference mockup
       context.save();
       context.translate(center, center);
-      for (let i = 0; i < 12; i += 1) {
-        const angle = (i * Math.PI * 2) / 12;
-        const tickRadius = radius - 20;
-        const x = Math.cos(angle) * tickRadius;
-        const y = Math.sin(angle) * tickRadius;
-
-        // Draw as small circles instead of dashes
+      for (let i = 0; i < 60; i += 1) {
+        const angle = (i * Math.PI * 2) / 60;
+        const outer = radius - 6;
+        const inner = outer - (i % 5 === 0 ? 18 : 10);
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
         context.beginPath();
-        context.arc(x, y, 3, 0, Math.PI * 2);
-        context.fillStyle = tickColor;
-        context.fill();
+        context.moveTo(cos * inner, sin * inner);
+        context.lineTo(cos * outer, sin * outer);
+        context.strokeStyle = i % 5 === 0 ? tickColor : `${tickColor}88`;
+        context.lineWidth = i % 5 === 0 ? 2 : 1;
+        context.lineCap = 'round';
+        context.stroke();
       }
       context.restore();
 
@@ -176,11 +184,11 @@ export default function AnalogClock() {
 
     // Initial zeroed render to match SSR
     const darkTheme = theme === 'dark';
-    const initBgColor = darkTheme ? '#02091A' : '#F8FAFF';
-    const initHourColor = darkTheme ? '#6BA3D4' : '#2F4156';
-    const initMinColor = darkTheme ? '#4FC3F7' : '#0066CC';
-    const initSecColor = darkTheme ? '#00E5FF' : '#0099FF';
-    const initPivotColor = darkTheme ? '#4FC3F7' : '#0066CC';
+    const initBgColor = darkTheme ? '#23344f' : '#fefefe';
+    const initHourColor = darkTheme ? '#f9f4e2' : '#2f3d53';
+    const initMinColor = initHourColor;
+    const initSecColor = initHourColor;
+    const initPivotColor = initHourColor;
     drawHandsAndTicks(new Date(0), initHourColor, initMinColor, initSecColor, initPivotColor, context, center, radius, dpr, CANVAS_SIZE);
     draw();
 
@@ -189,21 +197,21 @@ export default function AnalogClock() {
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     };
-  }, [theme]);
+  }, [theme, size]);
 
   const darkTheme = theme === 'dark';
   const glowColor = darkTheme 
-    ? 'shadow-[0_0_40px_rgba(79,195,247,0.4),0_0_80px_rgba(79,195,247,0.2)]' 
-    : 'shadow-[0_0_30px_rgba(0,102,204,0.2),0_0_60px_rgba(0,102,204,0.1)]';
-  const border = darkTheme ? 'border-blue-400/20' : 'border-blue-300/20';
+    ? 'shadow-[0_20px_50px_rgba(5,8,15,0.6)]' 
+    : 'shadow-[0_15px_40px_rgba(15,23,42,0.15)]';
+  const border = darkTheme ? 'border-blue-900/30' : 'border-slate-200';
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <div className={`absolute inset-8 rounded-full ${darkTheme ? 'bg-blue-400/5' : 'bg-blue-300/5'} blur-3xl`} />
+      <div className={`absolute inset-12 rounded-full ${darkTheme ? 'bg-blue-900/20' : 'bg-slate-200/60'} blur-3xl`} />
       <canvas
         ref={canvasRef}
-        width={CANVAS_SIZE}
-        height={CANVAS_SIZE}
+        width={size}
+        height={size}
         className={`rounded-full ${border} border ${glowColor}`}
       />
     </div>

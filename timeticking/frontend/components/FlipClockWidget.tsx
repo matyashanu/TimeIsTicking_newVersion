@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import 'flipclock/themes/flipclock';
+import { useTheme } from './ThemeProvider';
 
 export default function FlipClockWidget() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [dateStr, setDateStr] = useState('');
   const [yearPct, setYearPct] = useState('0.0%');
   const [yearPctNum, setYearPctNum] = useState(0);
+  const { theme } = useTheme();
 
   // Update date string and year percentage every second
   useEffect(() => {
@@ -60,24 +62,36 @@ export default function FlipClockWidget() {
     };
   }, []);
 
+  const progressWidth = `${Math.max(0, Math.min(100, yearPctNum))}%`;
+  const darkTheme = theme === 'dark';
+  const trackClass = darkTheme
+    ? 'bg-gradient-to-r from-blue-950/70 via-blue-900/20 to-blue-950/70 border border-blue-400/20'
+    : 'bg-gradient-to-r from-white/80 via-blue-100/40 to-white/80 border border-blue-500/20';
+  const fillClass = darkTheme
+    ? 'bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-200 shadow-[0_0_15px_rgba(79,195,247,0.45)]'
+    : 'bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-300 shadow-[0_0_12px_rgba(37,99,235,0.4)]';
+
   return (
-    <div className="flipclock-shell w-full flex items-center justify-center py-6">
-      <div className="digital-clock-container">
-        <div ref={containerRef} className="flipclock-instance" />
-        <div className="digital-clock-meta text-center">
-          <div className="digital-clock-date">{dateStr}</div>
-            <div className="w-full px-3">
-              <div className="h-3 rounded-full bg-slate-200 dark:bg-blue-900 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, yearPctNum))}%` }}
-                />
-              </div>
-            </div>
-            <div className="year-progress">{yearPct} of the year completed</div>
+    <div className="flipclock-shell w-full flex flex-col items-center justify-center gap-4 py-6">
+      <div className="digital-clock-container flex flex-col items-center gap-4 text-center">
+        <div ref={containerRef} className="flipclock-instance flip-clock-wrapper" />
+        <div className="digital-clock-date">{dateStr}</div>
+        <div className="year-progress text-sm uppercase tracking-[0.3em] opacity-80">
+          {yearPct} of the year completed
+        </div>
+        <div className="w-full max-w-md px-6">
+          <div className={`relative h-3 rounded-full overflow-hidden ${trackClass}`}>
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${fillClass}`}
+              style={{ width: progressWidth }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border border-white/50 shadow-lg"
+              style={{ left: `calc(${progressWidth} - 0.5rem)` }}
+            />
+          </div>
         </div>
       </div>
-      <div ref={containerRef} className="flipclock-instance flip-clock-wrapper" />
     </div>
   );
 }

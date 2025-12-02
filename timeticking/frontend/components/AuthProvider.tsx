@@ -21,8 +21,16 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => typeof window !== 'undefined' ? localStorage.getItem('tt_token') : null);
+  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('tt_token');
+    if (stored) {
+      setToken(stored);
+    }
+  }, []);
 
   useEffect(() => {
     if (token) {
