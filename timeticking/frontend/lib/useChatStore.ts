@@ -140,15 +140,16 @@ export function useChatStore() {
     loadFromSupabase();
   }, []);
 
-  async function addMessage(role: 'user' | 'assistant', content: string, file?: File) {
-    // Add locally first for instant UI feedback
-    const localMessage = addMessageForUser(userId, { role, content });
-    setMessages((m) => [...m, localMessage]);
+async function addMessage(role: 'user' | 'assistant', content: string, file?: File) {
+  // Add locally first for instant UI feedback
+  const localMessage = addMessageForUser(userId, { role, content });
+  setMessages((m) => [...m, localMessage]);
 
-    // Sync to Supabase in background
-    if (SYNC_ENABLED) {
-      try {
-        const result = await saveMessageToBackend(userId, role, content, file);
+  // Sync to Supabase in background
+  if (SYNC_ENABLED) {
+    try {
+      const result = await saveMessageToBackend(userId, role, content, file);
+      if (result?.message) {
         // Update with server-generated ID and attachments
         const updated = loadChatsForUser(userId);
         const idx = updated.findIndex((m) => m.id === localMessage.id);
@@ -172,11 +173,14 @@ export function useChatStore() {
           saveChatsForUser(userId, updated);
           setMessages(updated);
         }
-      } catch (error: any) {
-        console.error('Failed to sync message to Supabase:', error);
-        setSyncError(error.message);
+      } else {
+        setSyncError('AI backend unreachable; message kept locally.');
       }
+    } catch (error: any) {
+      console.error('Failed to sync message to Supabase:', error);
+      setSyncError(error.message);
     }
+  }
 
     return localMessage;
   }

@@ -12,10 +12,82 @@ import EventModal from './EventModal';
 import { addEventApi, deleteEventApi, fetchEvents, updateEventApi } from './api';
 
 const initialEvents: CalendarEvent[] = [];
+let lastView: CalendarView = 'month';
+
+type RecurrenceScope = 'one' | 'future' | 'all';
+
+function generateRecurringEvents(base: CalendarEvent): CalendarEvent[] {
+  const repeat = base.repeat || 'none';
+  if (repeat === 'none') return [base];
+
+  const start = new Date(base.start);
+  const end = new Date(base.end);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [base];
+
+  const durationMs = end.getTime() - start.getTime();
+  const maxOccurrences = 60;
+  const limit = new Date(start);
+  limit.setMonth(limit.getMonth() + 6);
+
+  const uid = base.uid || crypto.randomUUID();
+  const events: CalendarEvent[] = [];
+  let currentStart = new Date(start);
+  let count = 0;
+
+  while (count < maxOccurrences && currentStart <= limit) {
+    const currentEnd = new Date(currentStart.getTime() + durationMs);
+    events.push({
+      ...base,
+      id: count === 0 ? base.id : crypto.randomUUID(),
+      uid,
+      start: currentStart.toISOString(),
+      end: currentEnd.toISOString(),
+    });
+
+    count += 1;
+    if (repeat === 'daily') {
+      currentStart.setDate(currentStart.getDate() + 1);
+    } else if (repeat === 'weekly') {
+      currentStart.setDate(currentStart.getDate() + 7);
+    } else if (repeat === 'monthly') {
+      currentStart.setMonth(currentStart.getMonth() + 1);
+    } else if (repeat === 'yearly') {
+      currentStart.setFullYear(currentStart.getFullYear() + 1);
+    } else {
+      break;
+    }
+  }
+
+  return events;
+}
+
+function getSeriesKey(ev: CalendarEvent): string | null {
+  if (ev.uid) return ev.uid;
+  if (ev.rrule) return ev.rrule;
+  return null;
+}
+
+function askRecurrenceScope(kind: 'edit' | 'delete'): RecurrenceScope | null {
+  const action = kind === 'edit' ? 'Edit' : 'Delete';
+  const input = window.prompt(
+    `${action} which events?\n` +
+      `Type one of: "one", "future", "all"\n\n` +
+      `"one"    → only this event\n` +
+      `"future" → this and all future events in the series\n` +
+      `"all"    → every instance in the series`,
+    'one',
+  );
+  if (input == null) return null;
+  const normalized = input.trim().toLowerCase();
+  if (normalized === 'one' || normalized === 'future' || normalized === 'all') {
+    return normalized;
+  }
+  return null;
+}
 
 export default function CalendarContainer() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [view, setView] = useState<CalendarView>('month');
+  const [view, setViewState] = useState<CalendarView>(() => lastView);
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [loading, setLoading] = useState<boolean>(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -27,8 +99,8 @@ export default function CalendarContainer() {
   useEffect(() => {
     setLoading(true);
     fetchEvents()
-      .then((data) => {
-        setEvents(data.length ? data : initialEvents);
+      .then(({ events: fetchedEvents }) => {
+        setEvents(fetchedEvents.length ? fetchedEvents : initialEvents);
       })
       .catch(() => {
         setEvents((prev) =>
@@ -47,6 +119,14 @@ export default function CalendarContainer() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const setView = (next: CalendarView | ((prev: CalendarView) => CalendarView)) => {
+    setViewState((prev) => {
+      const resolved = typeof next === 'function' ? (next as (prev: CalendarView) => CalendarView)(prev) : next;
+      lastView = resolved;
+      return resolved;
+    });
+  };
 
   const handlePrev = () => {
     if (view === 'day') setCurrentDate(addDays(currentDate, -1));
@@ -83,15 +163,82 @@ export default function CalendarContainer() {
 
   const saveEvent = (ev: CalendarEvent) => {
     const isExisting = events.some((e) => e.id === ev.id);
-    const persist = isExisting ? updateEventApi(ev) : addEventApi(ev);
-    persist
-      .then((saved) => {
+
+    if (!isExisting) {
+      const seriesEvents = generateRecurringEvents(ev);
+      Promise.all(seriesEvents.map((item) => addEventApi(item)))
+        .then((savedEvents) => {
+          setEvents((prev) => [...prev, ...savedEvents]);
+        })
+        .finally(() => setModalOpen(false));
+      return;
+    }
+
+    const current = events.find((e) => e.id === ev.id);
+    if (!current) {
+      updateEventApi(ev)
+        .then((saved) => {
+          setEvents((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+        })
+        .finally(() => setModalOpen(false));
+      return;
+    }
+
+    const seriesKey = getSeriesKey(current);
+    const seriesEvents = seriesKey
+      ? events
+          .filter((e) => (getSeriesKey(e) || '') === seriesKey)
+          .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+      : [];
+
+    let scope: RecurrenceScope = 'one';
+    if (seriesEvents.length > 1 && current.repeat && current.repeat !== 'none') {
+      const choice = askRecurrenceScope('edit');
+      if (!choice) return;
+      scope = choice;
+    }
+
+    if (scope === 'one' || seriesEvents.length <= 1) {
+      updateEventApi(ev)
+        .then((saved) => {
+          setEvents((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+        })
+        .finally(() => setModalOpen(false));
+      return;
+    }
+
+    const baseStart = new Date(current.start).getTime();
+    const baseEnd = new Date(current.end).getTime();
+    const nextStart = new Date(ev.start).getTime();
+    const nextEnd = new Date(ev.end).getTime();
+    const deltaStart = nextStart - baseStart;
+    const deltaEnd = nextEnd - baseEnd;
+
+    const targets =
+      scope === 'all'
+        ? seriesEvents
+        : seriesEvents.filter((item) => new Date(item.start).getTime() >= baseStart);
+
+    const updatedEvents = targets.map((item) => {
+      const itemStart = new Date(item.start).getTime();
+      const itemEnd = new Date(item.end).getTime();
+      const updatedStart = new Date(itemStart + deltaStart).toISOString();
+      const updatedEnd = new Date(itemEnd + deltaEnd).toISOString();
+      return {
+        ...item,
+        title: ev.title,
+        description: ev.description,
+        color: ev.color,
+        start: updatedStart,
+        end: updatedEnd,
+      };
+    });
+
+    Promise.all(updatedEvents.map((item) => updateEventApi(item)))
+      .then((savedList) => {
         setEvents((prev) => {
-          const exists = prev.find((e) => e.id === saved.id);
-          if (exists) {
-            return prev.map((p) => (p.id === saved.id ? saved : p));
-          }
-          return [...prev, saved];
+          const map = new Map(savedList.map((s) => [s.id, s]));
+          return prev.map((item) => map.get(item.id) || item);
         });
       })
       .finally(() => setModalOpen(false));
@@ -114,15 +261,55 @@ export default function CalendarContainer() {
   };
 
   const deleteEvent = (id: string) => {
-    deleteEventApi(id)
+    const current = events.find((e) => e.id === id);
+    if (!current) {
+      deleteEventApi(id)
+        .then(() => {
+          setEvents((prev) => prev.filter((e) => e.id !== id));
+        })
+        .finally(() => setModalOpen(false));
+      return;
+    }
+
+    const seriesKey = getSeriesKey(current);
+    const seriesEvents = seriesKey
+      ? events
+          .filter((e) => (getSeriesKey(e) || '') === seriesKey)
+          .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+      : [];
+
+    let scope: RecurrenceScope = 'one';
+    if (seriesEvents.length > 1 && current.repeat && current.repeat !== 'none') {
+      const choice = askRecurrenceScope('delete');
+      if (!choice) return;
+      scope = choice;
+    }
+
+    if (scope === 'one' || seriesEvents.length <= 1) {
+      deleteEventApi(id)
+        .then(() => {
+          setEvents((prev) => prev.filter((e) => e.id !== id));
+        })
+        .finally(() => setModalOpen(false));
+      return;
+    }
+
+    const baseStart = new Date(current.start).getTime();
+    const targets =
+      scope === 'all'
+        ? seriesEvents
+        : seriesEvents.filter((item) => new Date(item.start).getTime() >= baseStart);
+    const idsToDelete = targets.map((item) => item.id);
+
+    Promise.all(idsToDelete.map((eventId) => deleteEventApi(eventId)))
       .then(() => {
-        setEvents((prev) => prev.filter((e) => e.id !== id));
+        setEvents((prev) => prev.filter((e) => !idsToDelete.includes(e.id)));
       })
       .finally(() => setModalOpen(false));
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 text-[color:var(--fg)]">
       <CalendarHeader
         currentDate={currentDate}
         view={view}

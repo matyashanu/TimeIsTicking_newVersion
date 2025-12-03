@@ -17,5 +17,12 @@ pnpm-debug.log*
 /timeticking/backend/dist/
 /timeticking/frontend/dist/
 /timeticking/frontend/coverage/
+
+# Env files
 .env
 .env.local
+
+# Local log files
+backend-dev.log
+frontend-dev.log
+*.log
