@@ -15,11 +15,6 @@ export default function Landing() {
 
   return (
     <div className="relative min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)] flex items-center justify-center px-4 py-10 overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 text-[8vw] font-black uppercase tracking-[0.3em] opacity-5 text-[color:var(--fg)]">
-        <span>AMAN IS A</span>
-        <span>GOOOOOOOOOOD</span>
-        <span>BOYYYYYYY</span>
-      </div>
       <button
         type="button"
         onClick={toggleTheme}
