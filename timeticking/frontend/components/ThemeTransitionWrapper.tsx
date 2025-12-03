@@ -1,10 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getThemeCssVariables, useTheme } from './ThemeProvider';
+import { ThemeContext, getThemeCssVariables, type Theme, useTheme } from './ThemeProvider';
+import { AuthProvider, useAuth } from './AuthProvider';
+import Landing from './Landing';
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Landing />;
+  return <>{children}</>;
+}
 
 export default function ThemeTransitionWrapper({ children }: { children: React.ReactNode }) {
-  const { theme, transition, completeTransition, mounted } = useTheme();
+  const { theme, toggleTheme, transition, completeTransition, mounted } = useTheme();
   const [domReady, setDomReady] = useState(false);
   const [animate, setAnimate] = useState(false);
 
@@ -27,10 +35,26 @@ export default function ThemeTransitionWrapper({ children }: { children: React.R
   const baseLayerStyle = useMemo(() => getThemeCssVariables(theme), [theme]);
   const shouldShowOverlay = transition.active && domReady && mounted;
 
+  const renderContent = (overrideTheme?: Theme) => (
+    <ThemeContext.Provider
+      value={{
+        theme: overrideTheme ?? theme,
+        toggleTheme,
+        transition,
+        completeTransition,
+        mounted,
+      }}
+    >
+      <AuthProvider>
+        <AuthGate>{children}</AuthGate>
+      </AuthProvider>
+    </ThemeContext.Provider>
+  );
+
   return (
     <>
       <div data-theme={theme} className="theme-layer-content" style={baseLayerStyle}>
-        {children}
+        {renderContent()}
       </div>
       {shouldShowOverlay ? (
         <div className="theme-transition-shell" aria-live="polite">
@@ -39,7 +63,7 @@ export default function ThemeTransitionWrapper({ children }: { children: React.R
             data-theme={transition.newTheme}
             style={getThemeCssVariables(transition.newTheme)}
           >
-            <div className="theme-layer-content">{children}</div>
+            <div className="theme-layer-content">{renderContent(transition.newTheme)}</div>
           </div>
           <div
             className={`theme-transition-old-layer ${directionClass}`}
@@ -51,7 +75,7 @@ export default function ThemeTransitionWrapper({ children }: { children: React.R
             }}
           >
             <div className="theme-layer-content" aria-hidden>
-              {children}
+              {renderContent(transition.oldTheme)}
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MoonStar, SunMedium } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useAuth } from './AuthProvider';
 import FocusToggle from '@/components/FocusToggle';
 
 const links = [
@@ -17,6 +18,7 @@ const links = [
 export default function TopNavbar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, logout } = useAuth();
 
   const isActive = (href: string) =>
     href === '/'
@@ -59,6 +61,15 @@ export default function TopNavbar() {
           >
             {theme === 'dark' ? <SunMedium size={18} /> : <MoonStar size={18} />}
           </button>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-md border border-[color:var(--border)]/60 px-3 py-2 text-sm text-[color:var(--fg)] transition hover:-translate-y-0.5 hover:bg-[color:var(--fg)]/10"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </nav>
     </header>
