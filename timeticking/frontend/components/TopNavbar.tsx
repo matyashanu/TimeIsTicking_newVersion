@@ -11,6 +11,7 @@ const links = [
   { href: '/planner', label: 'Planner' },
   { href: '/social', label: 'Social' },
   { href: '/settings', label: 'Settings' },
+  { href: '/profile', label: 'Profile' },
 ];
 
 export default function TopNavbar() {

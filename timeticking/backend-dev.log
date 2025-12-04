@@ -1,0 +1,5 @@
+
+> timeticking-backend@0.1.0 dev
+> tsx watch server.ts
+
+Server running on port 4000
