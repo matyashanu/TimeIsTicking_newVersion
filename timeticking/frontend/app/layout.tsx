@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import TopNavbar from '@/components/TopNavbar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import ThemeTransitionWrapper from '@/components/ThemeTransitionWrapper';
+import ScrollRestorationEffect from '@/components/ScrollRestorationEffect';
 
 export const metadata: Metadata = {
   title: 'TimeIsTicking',
@@ -15,11 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="app-surface">
         <ThemeProvider>
+          <ScrollRestorationEffect />
           <ThemeTransitionWrapper>
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen flex-col bg-[color:var(--bg)] text-[color:var(--fg)]">
               <TopNavbar />
               <main className="container mx-auto flex-1 px-4 py-10">
                 {children}

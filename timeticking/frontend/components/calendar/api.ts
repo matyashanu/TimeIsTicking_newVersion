@@ -1,4 +1,4 @@
-import { CalendarEvent } from './types';
+import { CalendarEvent, Subject } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -11,9 +11,17 @@ async function request(path: string, init?: RequestInit) {
   return res.json();
 }
 
-export async function fetchEvents(): Promise<CalendarEvent[]> {
+export type EventsResponse = {
+  events: CalendarEvent[];
+  subjects: Subject[];
+};
+
+export async function fetchEvents(): Promise<EventsResponse> {
   const data = await request('/api/calendar/events');
-  return (data.events || []) as CalendarEvent[];
+  return {
+    events: (data.events || []) as CalendarEvent[],
+    subjects: (data.subjects || []) as Subject[],
+  };
 }
 
 export async function addEventApi(event: CalendarEvent): Promise<CalendarEvent> {
@@ -44,5 +52,37 @@ export async function importCalendar(type: 'ics' | 'csv', payload: { content?: s
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  return (data.events || []) as CalendarEvent[];
+  return {
+    events: (data.events || []) as CalendarEvent[],
+    subjects: (data.subjects || []) as Subject[],
+  };
 }
+
+export async function fetchSubjects(): Promise<Subject[]> {
+  const data = await request('/api/subjects');
+  return (data.subjects || []) as Subject[];
+}
+
+export async function createSubjectApi(subject: Partial<Subject>): Promise<Subject> {
+  const data = await request('/api/subjects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subject),
+  });
+  return data.subject as Subject;
+}
+
+export async function updateSubjectApi(subject: Subject): Promise<Subject> {
+  const data = await request(`/api/subjects/${subject.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subject),
+  });
+  return data.subject as Subject;
+}
+
+export async function deleteSubjectApi(id: string): Promise<void> {
+  await request(`/api/subjects/${id}`, { method: 'DELETE' });
+}
+
+export type SubjectSort = 'alphabetical' | 'credits' | 'confidence';

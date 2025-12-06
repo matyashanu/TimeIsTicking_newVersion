@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend (Node/Express)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/timeticking/backend/server.ts",
+      "preLaunchTask": "build-backend",
+      "outFiles": ["${workspaceFolder}/timeticking/backend/dist/**/*.js"],
+      "cwd": "${workspaceFolder}/timeticking/backend",
+      "env": {
+        "NODE_ENV": "development",
+        "JWT_SECRET": "dev-secret",
+        "NEXT_PUBLIC_API_URL": "http://localhost:4000"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Frontend (Next.js Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/timeticking/frontend"
+    },
+    {
+      "name": "Both (Backend + Frontend)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/timeticking/backend/server.ts",
+      "preLaunchTask": "start-both",
+      "cwd": "${workspaceFolder}/timeticking/backend",
+      "env": {
+        "NODE_ENV": "development",
+        "JWT_SECRET": "dev-secret"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "serverReadyAction": {
+        "pattern": "listening on port ([0-9]+)",
+        "uriFormat": "http://localhost:4000",
+        "action": "openExternally"
+      }
+    }
+  ]
+}
