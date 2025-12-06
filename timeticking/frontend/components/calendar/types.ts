@@ -9,7 +9,7 @@ export interface CalendarEvent {
   color?: string;
   source?: 'local' | 'imported';
   location?: string;
-  repeat?: 'none' | 'daily' | 'weekly' | 'monthly';
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   uid?: string;
   rrule?: string;
   calendarId?: string;

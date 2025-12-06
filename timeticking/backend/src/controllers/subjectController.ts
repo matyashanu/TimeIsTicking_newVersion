@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
-import { subjectStore, createEmptySessionTypes, deleteSubjectById } from '../store/calendarStore.js';
+import {
+  subjectStore,
+  createEmptySessionTypes,
+  deleteSubjectById,
+  normalizeCourseCode,
+} from '../store/calendarStore.js';
 import { SubjectDTO } from '../types/calendar.js';
 
 function normalizeSemester(value?: string | null): SubjectDTO['semester'] {
@@ -15,7 +20,9 @@ export function listSubjects(_req: Request, res: Response) {
 
 export function createSubject(req: Request, res: Response) {
   const body = req.body as Partial<SubjectDTO>;
-  const code = (body.courseCode || body.id || uuid()).toUpperCase();
+  const rawCode = body.courseCode || body.id || uuid();
+  const code = normalizeCourseCode(rawCode);
+  if (!code) return res.status(400).json({ message: 'Invalid course code' });
   const name = body.name && body.name.length ? body.name : '(Unnamed Course)';
   const semester = normalizeSemester(body.semester);
   const existing = subjectStore.find((subject) => subject.courseCode === code);

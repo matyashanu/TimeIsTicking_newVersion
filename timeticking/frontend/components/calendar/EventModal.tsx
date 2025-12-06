@@ -16,7 +16,7 @@ interface Props {
   onDelete?: (id: string) => void;
 }
 
-const repeatOptions = ['none', 'daily', 'weekly', 'monthly'] as const;
+const repeatOptions = ['none', 'daily', 'weekly', 'monthly', 'yearly'] as const;
 
 export default function EventModal({
   open,
@@ -35,7 +35,7 @@ export default function EventModal({
   const [color, setColor] = useState<EventColorKey>('default');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
-  const [repeat, setRepeat] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [repeat, setRepeat] = useState<CalendarEvent['repeat']>('none');
 
   useEffect(() => {
     if (open) {
@@ -56,7 +56,7 @@ export default function EventModal({
       setColor(isColorKey(base.color) ? (base.color as EventColorKey) : 'default');
       setStart(base.start);
       setEnd(base.end);
-      setRepeat((base.repeat as typeof repeat) || 'none');
+      setRepeat((base.repeat as CalendarEvent['repeat']) || 'none');
     }
   }, [open, event, initialDate]);
 
@@ -136,7 +136,7 @@ export default function EventModal({
             <label className="text-sm font-semibold">Repeat</label>
             <select
               value={repeat}
-              onChange={(e) => setRepeat(e.target.value as typeof repeat)}
+              onChange={(e) => setRepeat(e.target.value as CalendarEvent['repeat'])}
               className={`mt-1 w-full rounded-lg border border-[color:var(--border)]/40 px-3 py-2 text-sm ${field} outline-none`}
             >
               {repeatOptions.map((r) => (
