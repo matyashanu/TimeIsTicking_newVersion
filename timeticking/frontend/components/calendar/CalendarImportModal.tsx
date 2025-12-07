@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { CalendarEvent } from './types';
 import { useTheme } from '../ThemeProvider';
 import { importCalendar } from './api';
@@ -14,6 +14,7 @@ interface Props {
 export default function CalendarImportModal({ open, onClose, onImportComplete }: Props) {
   const { theme } = useTheme();
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [preview, setPreview] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
     fileInputRef.current?.click();
   };
 
+  const handleSingleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
   const handleSingleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -78,6 +80,7 @@ export default function CalendarImportModal({ open, onClose, onImportComplete }:
       >
         <div className="mb-4 text-lg font-bold">Import Calendar</div>
         <div className="flex flex-col gap-4">
+          <p className="text-sm opacity-80">Upload your iCal (.ics) file or paste an iCal URL.</p>
           <p className="text-sm opacity-80">
             Upload your iCal (.ics) file or paste an iCal URL.
           </p>

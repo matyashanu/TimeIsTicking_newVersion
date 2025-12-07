@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
 const plannerTabs = [
   { href: '/planner/calendar', label: 'Calendar' },
+  { href: '/planner/tasks', label: 'Tasks' },
   { href: '/planner/goals', label: 'Goals' },
   { href: '/planner/subjects', label: 'Subjects' },
 ];

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from 'react';
 import 'flipclock/themes/flipclock';
 import { useTheme } from './ThemeProvider';
+import MotivationalQuoteRotator from '@/components/MotivationalQuoteRotator';
 
 export default function FlipClockWidget() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [dateStr, setDateStr] = useState('');
   const [yearPct, setYearPct] = useState('0.0%');
   const [yearPctNum, setYearPctNum] = useState(0);
   const { theme } = useTheme();
@@ -15,14 +15,6 @@ export default function FlipClockWidget() {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      setDateStr(
-        now.toLocaleDateString('en-US', {
-          weekday: 'short',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }),
-      );
 
       const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
       const end = new Date(now.getFullYear() + 1, 0, 1, 0, 0, 0);
@@ -75,7 +67,9 @@ export default function FlipClockWidget() {
     <div className="flipclock-shell w-full flex flex-col items-center justify-center gap-4 py-6">
       <div className="digital-clock-container flex flex-col items-center gap-4 text-center">
         <div ref={containerRef} className="flipclock-instance flip-clock-wrapper" />
-        <div className="digital-clock-date">{dateStr}</div>
+        <div className="digital-clock-motivation w-full">
+          <MotivationalQuoteRotator />
+        </div>
         <div className="year-progress text-sm uppercase tracking-[0.3em] opacity-80">
           {yearPct} of the year completed
         </div>

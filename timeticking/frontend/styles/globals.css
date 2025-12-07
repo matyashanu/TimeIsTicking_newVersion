@@ -80,6 +80,18 @@ button, label, h1, h2, h3, h4, h5, h6, nav, header, footer {
   text-transform: uppercase !important;
 }
 
+.priority-select,
+.priority-select option {
+  background-color: var(--card-bg);
+  color: var(--fg);
+}
+
+.priority-select option:hover,
+.priority-select option:checked {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--fg);
+}
+
 .theme-surface {
   background-color: var(--bg);
   color: var(--fg);

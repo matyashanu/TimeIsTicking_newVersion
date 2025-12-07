@@ -4,6 +4,7 @@ import TopNavbar from '@/components/TopNavbar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import ThemeTransitionWrapper from '@/components/ThemeTransitionWrapper';
 import ScrollRestorationEffect from '@/components/ScrollRestorationEffect';
+import { TasksProvider } from '@/components/tasks/TasksProvider';
 
 export const metadata: Metadata = {
   title: 'TimeIsTicking',
@@ -19,15 +20,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="app-surface">
         <ThemeProvider>
-          <ScrollRestorationEffect />
-          <ThemeTransitionWrapper>
-            <div className="flex min-h-screen flex-col bg-[color:var(--bg)] text-[color:var(--fg)]">
-              <TopNavbar />
-              <main className="container mx-auto flex-1 px-4 py-10">
-                {children}
-              </main>
-            </div>
-          </ThemeTransitionWrapper>
+          <TasksProvider>
+            <ScrollRestorationEffect />
+            <ThemeTransitionWrapper>
+              <div className="flex min-h-screen flex-col bg-[color:var(--bg)] text-[color:var(--fg)]">
+                <TopNavbar />
+                <main className="container mx-auto flex-1 px-4 py-10">
+                  {children}
+                </main>
+              </div>
+            </ThemeTransitionWrapper>
+          </TasksProvider>
         </ThemeProvider>
       </body>
     </html>
