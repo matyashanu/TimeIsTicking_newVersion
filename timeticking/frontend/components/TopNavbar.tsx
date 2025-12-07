@@ -13,6 +13,7 @@ const links = [
   { href: '/ai-feature', label: 'AI' },
   { href: '/social', label: 'Social' },
   { href: '/settings', label: 'Settings' },
+  { href: '/profile', label: 'Profile' },
 ];
 
 export default function TopNavbar() {

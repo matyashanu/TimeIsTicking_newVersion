@@ -55,6 +55,7 @@ function parseSubjectInfoFromSummary(summary?: string): ParsedSubjectInfo {
   const prefix = trimmed.slice(0, 6);
   const sessionChar = prefix[2] || null;
   const rawCourseCode = prefix.slice(0, 2) + prefix.slice(3, 6);
+  const rawCourseCode = prefix.slice(0, 2) + prefix.slice(3, 6); // drop 3rd char
   const normalizedCourseCode = normalizeCourseCode(rawCourseCode);
   const rest = trimmed.slice(6).trimStart();
 
