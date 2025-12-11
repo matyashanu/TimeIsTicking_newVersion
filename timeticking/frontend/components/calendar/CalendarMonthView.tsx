@@ -3,6 +3,7 @@
 import { addDays, differenceInCalendarDays, endOfMonth, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 import { CalendarEvent } from './types';
 import { useTheme } from '../ThemeProvider';
+import { resolveEventColors } from './colors';
 
 interface Props {
   currentDate: Date;
@@ -76,28 +77,27 @@ export default function CalendarMonthView({ currentDate, events, onSelectDate }:
   const monthIndex = currentDate.getMonth();
   const { theme } = useTheme();
   const todayKey = startOfDay(new Date()).toISOString().slice(0, 10);
-  const text = theme === 'dark' ? 'text-beige' : 'text-navy';
-  const border = theme === 'dark' ? 'border-beige/30' : 'border-navy/30';
-  const barBg = theme === 'dark' ? 'rgba(255,240,219,0.12)' : 'rgba(47,65,86,0.12)';
-  const barText = theme === 'dark' ? '#fff0db' : '#2F4156';
-  const todayBg = theme === 'dark' ? 'bg-beige text-navy' : 'bg-navy text-beige';
+  const barPalette =
+    theme === 'dark'
+      ? { bg: 'rgba(245,239,235,0.12)', text: '#F5EFEB' }
+      : { bg: 'rgba(36,51,65,0.14)', text: '#2F4156' };
 
   const overflow: Record<string, number> = {};
 
   return (
-    <div className="w-full">
-      <div className={`mb-2 grid grid-cols-7 text-center text-sm font-bold uppercase tracking-wide ${text}`}>
+    <div className="w-full rounded-3xl border border-[color:var(--border)]/25 bg-[color:var(--card-bg)]/70 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
+      <div className="mb-2 grid grid-cols-7 text-center text-sm font-bold uppercase tracking-wide text-[color:var(--fg)]">
         {weekdays.map((d) => (
           <div key={d}>{d}</div>
         ))}
       </div>
-      <div className="flex flex-col overflow-hidden rounded-lg border border-white/5">
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-[color:var(--border)]/15">
         {weeks.map((week, idx) => {
           const bars = buildWeekBars(week, events, overflow);
           return (
             <div
               key={idx}
-              className="relative grid grid-cols-7 gap-px border-b border-white/5"
+              className="relative grid grid-cols-7 gap-px border-b border-[color:var(--border)]/10"
               style={{ minHeight: 120 }}
             >
               {week.map((day) => {
@@ -110,19 +110,19 @@ export default function CalendarMonthView({ currentDate, events, onSelectDate }:
                     type="button"
                     key={key}
                     onClick={() => onSelectDate?.(day)}
-                    className={`relative flex min-h-[120px] flex-col items-start rounded-sm p-2 text-left text-xs font-bold uppercase ${text} ${
+                    className={`relative flex min-h-[120px] flex-col items-start rounded-md p-2 text-left text-xs font-bold uppercase text-[color:var(--fg)] ${
                       isCurrentMonth ? '' : 'opacity-50'
                     }`}
                   >
                     <div
                       className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-black ${
-                        isToday ? todayBg : ''
+                        isToday ? 'current-day-chip' : 'text-[color:var(--fg)]'
                       }`}
                     >
                       {day.getDate()}
                     </div>
                     {overflowCount > 0 ? (
-                      <div className="mt-1 text-[11px] font-black text-amber-500">
+                      <div className="mt-1 text-[11px] font-black text-amber-400">
                         +{overflowCount} more
                       </div>
                     ) : null}
@@ -133,18 +133,21 @@ export default function CalendarMonthView({ currentDate, events, onSelectDate }:
                 {bars.map((bar) => {
                   const width = `${(bar.span / 7) * 100}%`;
                   const left = `${(bar.startCol / 7) * 100}%`;
+                  const colors = resolveEventColors(theme, bar.event.color);
                   return (
                     <button
                       key={`${bar.event.id}-${bar.row}`}
                       type="button"
                       onClick={() => onSelectDate?.(new Date(bar.event.start))}
-                      className="pointer-events-auto absolute h-6 overflow-hidden rounded-md border border-white/10 px-2 text-[11px] font-bold uppercase"
+                      className="pointer-events-auto absolute h-6 overflow-hidden rounded-lg px-2 text-[11px] font-bold uppercase text-ellipsis whitespace-nowrap"
                       style={{
                         left,
                         width,
                         top: bar.row * 26,
-                        background: bar.event.color || barBg,
-                        color: barText,
+                        background: colors.background,
+                        color: colors.color,
+                        border: colors.border,
+                        lineHeight: 1.2,
                       }}
                     >
                       {bar.event.title}

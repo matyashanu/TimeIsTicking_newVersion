@@ -1,0 +1,11 @@
+
+> timeticking-backend@0.1.0 dev
+> tsx watch server.ts
+
+Server running on port 4000
+5:48:46 PM [tsx] change in ./src/models/storage.ts Restarting...
+cServer running on port 4000
+5:49:17 PM [tsx] change in ./src/app.ts Restarting...
+cServer running on port 4000
+5:51:19 PM [tsx] change in ./src/routes/focusRoutes.ts Restarting...
+cServer running on port 4000

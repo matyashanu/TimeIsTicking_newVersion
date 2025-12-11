@@ -12,10 +12,11 @@ import EventModal from './EventModal';
 import { addEventApi, deleteEventApi, fetchEvents, updateEventApi } from './api';
 
 const initialEvents: CalendarEvent[] = [];
+let lastView: CalendarView = 'month';
 
 export default function CalendarContainer() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [view, setView] = useState<CalendarView>('month');
+  const [view, setViewState] = useState<CalendarView>(() => lastView);
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [loading, setLoading] = useState<boolean>(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -27,8 +28,8 @@ export default function CalendarContainer() {
   useEffect(() => {
     setLoading(true);
     fetchEvents()
-      .then((data) => {
-        setEvents(data.length ? data : initialEvents);
+      .then(({ events: fetchedEvents }) => {
+        setEvents(fetchedEvents.length ? fetchedEvents : initialEvents);
       })
       .catch(() => {
         setEvents((prev) =>
@@ -47,6 +48,14 @@ export default function CalendarContainer() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const setView = (next: CalendarView | ((prev: CalendarView) => CalendarView)) => {
+    setViewState((prev) => {
+      const resolved = typeof next === 'function' ? (next as (prev: CalendarView) => CalendarView)(prev) : next;
+      lastView = resolved;
+      return resolved;
+    });
+  };
 
   const handlePrev = () => {
     if (view === 'day') setCurrentDate(addDays(currentDate, -1));
@@ -122,7 +131,7 @@ export default function CalendarContainer() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 text-[color:var(--fg)]">
       <CalendarHeader
         currentDate={currentDate}
         view={view}

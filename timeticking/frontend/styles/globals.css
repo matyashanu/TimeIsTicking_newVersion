@@ -4,24 +4,42 @@
 
 :root,
 [data-theme='dark'] {
-  --bg: #01030A;
-  --bg-radial-inner: #0A3C75;
-  --bg-radial-outer: #02040B;
+  --bg: #2F4156;
   --fg: #F5EFEB;
-  --card-bg: #02091A;
-  --surface-glow: rgba(10, 60, 117, 0.4);
-  --vignette-color: rgba(0, 0, 0, 0.15);
+  --card-bg: #243341;
+  --border: #F5EFEB;
+  --muted: rgba(245, 239, 235, 0.65);
+  --grid-line: rgba(245, 239, 235, 0.18);
+  --tint: rgba(245, 239, 235, 0.1);
+  --selection: rgba(245, 239, 235, 0.2);
+  --current-day-bg: #F5EFEB;
+  --current-day-text: #2F4156;
+  --theme-surface: #243341;
+  --theme-text: #F5EFEB;
+  --theme-border: #F5EFEB;
+  --clock-bg: var(--theme-surface);
+  --clock-text: var(--theme-text);
+  --clock-border: var(--theme-border);
   color-scheme: dark;
 }
 
 [data-theme='light'] {
-  --bg: #E7F1FF;
-  --bg-radial-inner: #BFD9FF;
-  --bg-radial-outer: #F4F8FF;
+  --bg: #F5EFEB;
   --fg: #2F4156;
-  --card-bg: #FDFEFF;
-  --surface-glow: rgba(191, 217, 255, 0.3);
-  --vignette-color: rgba(0, 0, 0, 0.05);
+  --card-bg: #E6DED8;
+  --border: #2F4156;
+  --muted: rgba(47, 65, 86, 0.65);
+  --grid-line: rgba(47, 65, 86, 0.18);
+  --tint: rgba(47, 65, 86, 0.12);
+  --selection: rgba(47, 65, 86, 0.15);
+  --current-day-bg: #2F4156;
+  --current-day-text: #F5EFEB;
+  --theme-surface: #E6DED8;
+  --theme-text: #2F4156;
+  --theme-border: #2F4156;
+  --clock-bg: var(--theme-surface);
+  --clock-text: var(--theme-text);
+  --clock-border: var(--theme-border);
   color-scheme: light;
 }
 
@@ -30,103 +48,25 @@ body {
   height: 100%;
   background-color: var(--bg);
   color: var(--fg);
+  scroll-behavior: auto !important;
 }
 
-/* Main background with radial gradient */
-html {
-  background: 
-    radial-gradient(
-      ellipse 800px 600px at center,
-      var(--bg-radial-inner),
-      var(--bg-radial-outer)
-    ),
-    var(--bg);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+html[data-theme='light'],
+html[data-theme='light'] body {
+  background-color: #F5EFEB !important;
+  color: #2F4156 !important;
 }
 
+html[data-theme='dark'],
+html[data-theme='dark'] body {
+  background-color: #2F4156 !important;
+  color: #F5EFEB !important;
+}
+
+.app-surface,
 body {
-  background: 
-    radial-gradient(
-      ellipse 800px 600px at center,
-      var(--bg-radial-inner),
-      var(--bg-radial-outer)
-    ),
-    var(--bg);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  position: relative;
-}
-
-/* Scale radial gradient on larger screens */
-@media (min-width: 1024px) {
-  html {
-    background: 
-      radial-gradient(
-        ellipse 1000px 750px at center,
-        var(--bg-radial-inner),
-        var(--bg-radial-outer)
-      ),
-      var(--bg);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-
-  body {
-    background: 
-      radial-gradient(
-        ellipse 1000px 750px at center,
-        var(--bg-radial-inner),
-        var(--bg-radial-outer)
-      ),
-      var(--bg);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-}
-
-@media (min-width: 1280px) {
-  html {
-    background: 
-      radial-gradient(
-        ellipse 1200px 900px at center,
-        var(--bg-radial-inner),
-        var(--bg-radial-outer)
-      ),
-      var(--bg);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-
-  body {
-    background: 
-      radial-gradient(
-        ellipse 1200px 900px at center,
-        var(--bg-radial-inner),
-        var(--bg-radial-outer)
-      ),
-      var(--bg);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-}
-
-/* Subtle vignette effect */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 1;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 0%,
-    transparent 50%,
-    var(--vignette-color) 100%
-  );
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
 * {
@@ -136,37 +76,91 @@ body::before {
   color: var(--fg);
 }
 
-/* Form controls should preserve user input case (allow lowercase) */
-input,
-textarea,
-select,
-button,
-.no-transform {
-  text-transform: none !important;
+.theme-surface {
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
-/* Main content container styling */
-main {
-  position: relative;
-  z-index: 2;
+.theme-card {
+  background-color: var(--card-bg);
+  color: var(--fg);
 }
 
-/* Ensure all page sections are above vignette */
-section {
-  position: relative;
-  z-index: 2;
+.theme-border {
+  border-color: var(--border) !important;
 }
 
-/* Clock and card container glows */
-.flip-clock-container,
-.clock-container,
-.analog-clock-container {
-  background: var(--card-bg);
-  border-radius: 1.5rem;
-  box-shadow: 
-    0 0 30px var(--surface-glow),
-    0 0 60px var(--surface-glow),
-    inset 0 0 20px rgba(255, 255, 255, 0.05);
+.theme-muted {
+  color: var(--muted);
+}
+
+.current-day-highlight {
+  background-color: var(--tint);
+}
+
+.calendar-selection {
+  background-color: var(--selection);
+  border-color: var(--border);
+}
+
+.calendar-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.nav-tab {
+  border-radius: 9999px;
+  padding: 0.4rem 1.25rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme='dark'] .nav-tab {
+  color: var(--fg);
+}
+
+[data-theme='dark'] .nav-tab--active {
+  background-color: var(--fg);
+  color: var(--bg);
+}
+
+[data-theme='light'] .nav-tab {
+  color: var(--fg);
+}
+
+[data-theme='light'] .nav-tab--active {
+  background-color: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+  box-shadow: 0 6px 16px rgba(47, 65, 86, 0.15);
+}
+
+.calendar-today-pill {
+  border-radius: 9999px;
+  padding: 0.35rem 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: var(--current-day-bg);
+  color: var(--current-day-text);
+}
+
+.calendar-today-pill * {
+  color: var(--current-day-text);
+}
+
+.current-day-chip {
+  background-color: var(--current-day-bg);
+  color: var(--current-day-text);
+}
+
+.current-day-chip * {
+  color: var(--current-day-text);
 }
 
 select.themed-select {
@@ -581,6 +575,7 @@ select.themed-select:focus {
   height: 100vh;
   z-index: 99999;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .theme-transition-old-layer,
@@ -589,16 +584,16 @@ select.themed-select:focus {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .theme-transition-new-layer {
   z-index: 99998;
-  pointer-events: auto;
 }
 
 .theme-transition-old-layer {
   z-index: 99999;
-  pointer-events: none;
   clip-path: inset(0% 0% 0% 0%);
   transition: clip-path 550ms ease-in-out;
   will-change: clip-path;
@@ -639,63 +634,42 @@ select.themed-select:focus {
   flex-wrap: nowrap;
 }
 
-[data-theme='dark'] .flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
-[data-theme='dark'] .flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom {
-  background: linear-gradient(to bottom, rgba(79, 195, 247, 0.15), rgba(15, 76, 129, 0.2));
-  color: #BFD9FF;
-  box-shadow: 
-    inset 0 1px 3px rgba(255, 255, 255, 0.1),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.2),
-    0 0 15px rgba(79, 195, 247, 0.2);
-  border-radius: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+.flip-clock-wrapper *,
+.flip-clock-wrapper .flip,
+.flip-clock-wrapper .up,
+.flip-clock-wrapper .down {
+  background-color: var(--clock-bg) !important;
+  color: var(--clock-text) !important;
+  border-color: var(--clock-border) !important;
 }
 
-[data-theme='light'] .flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
-[data-theme='light'] .flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom {
-  background: linear-gradient(to bottom, rgba(191, 217, 255, 0.4), rgba(176, 196, 222, 0.3));
-  color: #1F3A5F;
-  box-shadow: 
-    inset 0 1px 3px rgba(255, 255, 255, 0.6),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.08),
-    0 0 12px rgba(0, 102, 204, 0.1);
-  border-radius: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+.flip-clock,
+.flip-clock *,
+.flip-clock .flip-clock-card,
+.flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
+.flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom {
+  background-color: var(--clock-bg) !important;
+  color: var(--clock-text) !important;
+  border-color: var(--clock-border) !important;
+}
+
+.flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
+.flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom {
+  box-shadow: inset 0 0 0.2em rgba(0, 0, 0, 0.25);
 }
 
 .flip-clock .flip-clock-card .flip-clock-card-item-inner .top:before,
 .flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom:before {
-  background: rgba(79, 195, 247, 0.3);
-}
-
-[data-theme='light'] .flip-clock .flip-clock-card .flip-clock-card-item-inner .top:before,
-[data-theme='light'] .flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom:before {
-  background: rgba(0, 102, 204, 0.2);
+  background-color: var(--clock-border);
+  opacity: 0.35;
 }
 
 .flip-clock .flip-clock-divider {
-  color: var(--fg);
-  background: linear-gradient(to right, transparent, var(--surface-glow), transparent);
+  color: var(--clock-text);
 }
 
-[data-theme='dark'] .flip-clock .flip-clock-card {
-  box-shadow: 
-    0 0 20px rgba(79, 195, 247, 0.3),
-    0 0 40px rgba(79, 195, 247, 0.1),
-    inset 0 0 10px rgba(79, 195, 247, 0.05);
-  border-radius: 1rem;
-  border: 1px solid rgba(79, 195, 247, 0.15);
-}
-
-[data-theme='light'] .flip-clock .flip-clock-card {
-  box-shadow: 
-    0 0 15px rgba(0, 102, 204, 0.15),
-    0 0 30px rgba(0, 102, 204, 0.05),
-    inset 0 0 8px rgba(0, 102, 204, 0.03);
-  border-radius: 1rem;
-  border: 1px solid rgba(0, 102, 204, 0.1);
+.flip-clock .flip-clock-card {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 @media (max-width: 768px) {
@@ -705,109 +679,3 @@ select.themed-select:focus {
     --height: 1.2em;
   }
 }
-
-/* Digital clock: toned-down, focused styling */
-.digital-clock-container {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  /* subtle solid/soft gradient that ties into page palette */
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.03);
-  box-shadow: 0 4px 18px rgba(2,9,26,0.18);
-}
-
-.digital-clock-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.5rem;
-}
-
-/* Date */
-.digital-clock-date {
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--fg);
-  opacity: 0.85;
-}
-
-/* Year progress (smaller, softer) */
-.year-progress {
-  font-size: 0.85rem;
-  color: var(--fg);
-  opacity: 0.65;
-  font-weight: 500;
-}
-
-/* Dark/light mode tweaks for container background and shadows */
-[data-theme='dark'] .digital-clock-container {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
-  border: 1px solid rgba(79,195,247,0.06);
-  box-shadow: 0 6px 24px rgba(2,9,26,0.6);
-}
-
-[data-theme='light'] .digital-clock-container {
-  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(244,248,255,0.9));
-  border: 1px solid rgba(0,102,204,0.06);
-  box-shadow: 0 6px 24px rgba(16,24,40,0.06);
-}
-
-/* Narrower, more focused flip clock digits inside the digital container */
-.digital-clock-container .flip-clock {
-  --font-family: 'Roboto Condensed', 'Trade Gothic Next Heavy', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-size: 3.2rem;
-}
-
-/* Reduce heavy glow for flip clock when inside the focused container */
-.digital-clock-container .flip-clock .flip-clock-card {
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-  border-radius: 0.75rem;
-  border: 1px solid rgba(0,0,0,0.12);
-}
-
-/* Digit face color overrides to ensure strong legibility */
-.digital-clock-container .flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
-[data-theme='dark'] .digital-clock-container .flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
-[data-theme='dark'] .digital-clock-container .flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom {
-  background: rgba(3,6,12,0.6);
-  color: #EAF6FF; /* light blue-white */
-  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.4);
-}
-
-[data-theme='light'] .digital-clock-container .flip-clock .flip-clock-card .flip-clock-card-item-inner .top,
-[data-theme='light'] .digital-clock-container .flip-clock .flip-clock-card .flip-clock-card-item-inner .bottom {
-  background: #FFFFFF;
-  color: #0F2336; /* dark navy */
-  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.06);
-}
-
-/* Vibrant accent styling for greeting - uses app's main sans-serif font */
-.greeting-accent {
-  font-family: 'Trade Gothic Next Heavy', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.05em;
-  line-height: 1.4;
-  text-transform: uppercase !important;
-  /* Subtle glow effect for "alive" and motivational feel */
-  text-shadow: 0 0 20px currentColor;
-  opacity: 0.95;
-}
-
-/* Serif font styles for motivational quote */
-/* Times New Roman for warm, elegant aesthetic */
-.quote-serif {
-  font-family: "Times New Roman", Times, serif !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.015em;
-  line-height: 1.7;
-  /* Ensures serif font overrides global uppercase rule */
-  text-transform: none !important;
-}
-
